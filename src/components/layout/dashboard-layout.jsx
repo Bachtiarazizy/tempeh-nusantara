@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Sidebar } from "./Sidebar";
-import { Header } from "./Header";
+import { Sidebar } from "./sidebar";
+import { Header } from "./header";
 
 export const DashboardLayout = ({ children, title }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
