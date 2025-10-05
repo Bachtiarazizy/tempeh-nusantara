@@ -123,19 +123,19 @@ const Footer = () => {
             <div className="space-y-2.5">
               <div className="flex items-center text-white/80">
                 <Mail className="w-4 h-4 mr-2.5 text-white flex-shrink-0" />
-                <a href="mailto:info@tempenusantara.com" className="hover:text-white transition-colors text-xs">
+                <a href="mailto:info@tempenusantara.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors text-xs">
                   info@tempenusantara.com
                 </a>
               </div>
               <div className="flex items-center text-white/80">
                 <Phone className="w-4 h-4 mr-2.5 text-white flex-shrink-0" />
-                <a href="tel:+15551234567" className="hover:text-white transition-colors text-xs">
-                  +1 (555) 123-4567
+                <a href="https://wa.me/6281299998340" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors text-xs">
+                  +62 (812) 9999-8340
                 </a>
               </div>
               <div className="flex items-center text-white/80">
                 <MapPin className="w-4 h-4 mr-2.5 text-white flex-shrink-0" />
-                <span className="text-xs">456 Tempeh Ave, Jakarta, Indonesia</span>
+                <span className="text-xs">Jakarta, Indonesia</span>
               </div>
             </div>
           </div>

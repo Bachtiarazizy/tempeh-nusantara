@@ -16,21 +16,21 @@ const LandingPage = () => {
       icon: Package,
       title: "Premium Products",
       description: "Authentic Indonesian tempeh made with traditional fermentation methods",
-      color: "from-blue-50 to-blue-100",
+      color: "from-amber-50 to-amber-100",
       iconColor: "bg-blue-500",
     },
     {
       icon: Users,
       title: "Affiliate Program",
       description: "Join our ranking system and earn competitive commissions",
-      color: "from-green-50 to-green-100",
+      color: "from-amber-50 to-amber-100",
       iconColor: "bg-green-500",
     },
     {
       icon: Truck,
       title: "Global Export",
       description: "Reliable international shipping with cold chain management",
-      color: "from-purple-50 to-purple-100",
+      color: "from-amber-50 to-amber-100",
       iconColor: "bg-purple-500",
     },
     {
@@ -88,14 +88,14 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
             <div className="inline-flex items-center px-4 py-2 bg-secondary bg-opacity-20 rounded-full backdrop-blur-sm mb-6">
-              <Award className="w-5 h-5 mr-2 text-green-400" />
+              <Award className="w-5 h-5 mr-2 text-primary" />
               <span className="text-sm text-primary font-medium">Premium Indonesian Tempeh</span>
             </div>
 
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
               Export Quality
               <br />
-              <span className="text-green-400">Tempeh</span> Worldwide
+              <span className="">Tempeh</span> Worldwide
             </h1>
 
             <p className="text-base md:text-medium text-secondary/80 max-w-3xl mx-auto leading-relaxed mb-10">
