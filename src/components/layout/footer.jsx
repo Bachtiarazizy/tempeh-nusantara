@@ -72,79 +72,81 @@ const Footer = () => {
   return (
     <footer className="bg-primary text-white">
       {/* Features/Benefits Section */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-12 pt-12 border-t border-gray-800">
-        <div className="text-center">
-          <div className="w-12 h-12 bg-secondary/30 rounded-full flex items-center justify-center mx-auto mb-3">
-            <Truck className="w-6 h-6 text-white" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 py-12 border-b border-white/50">
+          <div className="text-center">
+            <div className="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Truck className="w-6 h-6 text-white" />
+            </div>
+            <h5 className="font-semibold mb-1 text-sm">Global Shipping</h5>
+            <p className="text-white/60 text-xs">Reliable global delivery</p>
           </div>
-          <h5 className="font-semibold mb-1">Global Shipping</h5>
-          <p className="text-gray-400 text-sm">Reliable global delivery</p>
-        </div>
 
-        <div className="text-center">
-          <div className="w-12 h-12 bg-secondary/30 rounded-full flex items-center justify-center mx-auto mb-3">
-            <Award className="w-6 h-6 text-white" />
+          <div className="text-center">
+            <div className="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Award className="w-6 h-6 text-white" />
+            </div>
+            <h5 className="font-semibold mb-1 text-sm">Premium Quality</h5>
+            <p className="text-white/60 text-xs">Traditional Indonesian methods</p>
           </div>
-          <h5 className="font-semibold mb-1">Premium Quality</h5>
-          <p className="text-gray-400 text-sm">Traditional Indonesian methods</p>
-        </div>
 
-        <div className="text-center">
-          <div className="w-12 h-12 bg-secondary/30 rounded-full flex items-center justify-center mx-auto mb-3">
-            <Users className="w-6 h-6 text-white" />
+          <div className="text-center">
+            <div className="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Users className="w-6 h-6 text-white" />
+            </div>
+            <h5 className="font-semibold mb-1 text-sm">Affiliate Program</h5>
+            <p className="text-white/60 text-xs">Earn with our ranking system</p>
           </div>
-          <h5 className="font-semibold mb-1">Affiliate Program</h5>
-          <p className="text-gray-400 text-sm">Earn with our ranking system</p>
-        </div>
 
-        <div className="text-center">
-          <div className="w-12 h-12 bg-secondary/30 rounded-full flex items-center justify-center mx-auto mb-3">
-            <CreditCard className="w-6 h-6 text-white" />
+          <div className="text-center">
+            <div className="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-3">
+              <CreditCard className="w-6 h-6 text-white" />
+            </div>
+            <h5 className="font-semibold mb-1 text-sm">Secure Payments</h5>
+            <p className="text-white/60 text-xs">Multiple payment options</p>
           </div>
-          <h5 className="font-semibold mb-1">Secure Payments</h5>
-          <p className="text-gray-400 text-sm">Multiple payment options</p>
         </div>
       </div>
+
       {/* Main Footer Content */}
-      <Separator className="my-8 bg-secondary/30" />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 mb-8">
           {/* Company Info */}
           <div className="lg:col-span-2">
             <div className="flex items-center mb-4">
-              <Image src="/logo.png" alt="logo tempeh nusantara" width={80} height={80} />
+              <Image src="/logo.png" alt="logo tempeh nusantara" width={70} height={70} />
             </div>
 
-            <p className="text-gray-300 mb-6 leading-relaxed">Premium Indonesian tempeh for global markets. Crafted with traditional methods using the finest ingredients for authentic taste and superior nutrition.</p>
+            <p className="text-white/90 text-sm mb-6 leading-relaxed">Premium Indonesian tempeh for global markets. Crafted with traditional methods using the finest ingredients.</p>
 
             {/* Contact Info */}
-            <div className="space-y-3">
-              <div className="flex items-center text-gray-300">
-                <Mail className="w-5 h-5 mr-3 text-secondary" />
-                <a href="mailto:info@tempenusantara.com" className="hover:text-white transition-colors">
+            <div className="space-y-2.5">
+              <div className="flex items-center text-white/80">
+                <Mail className="w-4 h-4 mr-2.5 text-white flex-shrink-0" />
+                <a href="mailto:info@tempenusantara.com" className="hover:text-white transition-colors text-xs">
                   info@tempenusantara.com
                 </a>
               </div>
-              <div className="flex items-center text-gray-300">
-                <Phone className="w-5 h-5 mr-3 text-secondary" />
-                <a href="tel:+15551234567" className="hover:text-white transition-colors">
+              <div className="flex items-center text-white/80">
+                <Phone className="w-4 h-4 mr-2.5 text-white flex-shrink-0" />
+                <a href="tel:+15551234567" className="hover:text-white transition-colors text-xs">
                   +1 (555) 123-4567
                 </a>
               </div>
-              <div className="flex items-center text-gray-300">
-                <MapPin className="w-5 h-5 mr-3 text-secondary" />
-                <span>456 Tempeh Ave, Jakarta, Indonesia</span>
+              <div className="flex items-center text-white/80">
+                <MapPin className="w-4 h-4 mr-2.5 text-white flex-shrink-0" />
+                <span className="text-xs">456 Tempeh Ave, Jakarta, Indonesia</span>
               </div>
             </div>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-lg font-semibold mb-4 flex items-center">Shop</h4>
-            <ul className="space-y-2 text-medium">
+            <h4 className="text-sm font-semibold mb-4 text-white">Shop</h4>
+            <ul className="space-y-2">
               {quickLinks.map((link) => (
                 <li key={link.name}>
-                  <a href={link.href} className="text-gray-300 text-medium hover:text-white transition-colors">
+                  <a href={link.href} className="text-white/70 text-xs hover:text-secondary transition-colors">
                     {link.name}
                   </a>
                 </li>
@@ -154,11 +156,11 @@ const Footer = () => {
 
           {/* Business Links */}
           <div>
-            <h4 className="text-lg font-semibold mb-4 flex items-center">Business</h4>
-            <ul className="space-y-2 text-medium">
+            <h4 className="text-sm font-semibold mb-4 text-white">Business</h4>
+            <ul className="space-y-2">
               {businessLinks.map((link) => (
                 <li key={link.name}>
-                  <a href={link.href} className="text-gray-300 text-medium hover:text-white transition-colors">
+                  <a href={link.href} className="text-white/70 text-xs hover:text-secondary transition-colors">
                     {link.name}
                   </a>
                 </li>
@@ -168,11 +170,11 @@ const Footer = () => {
 
           {/* Affiliate Links */}
           <div>
-            <h4 className="text-lg font-semibold mb-4 flex items-center">Affiliate</h4>
-            <ul className="space-y-2 text-medium">
+            <h4 className="text-sm font-semibold mb-4 text-white">Affiliate</h4>
+            <ul className="space-y-2">
               {affiliateLinks.map((link) => (
                 <li key={link.name}>
-                  <a href={link.href} className="text-gray-300 text-medium hover:text-white transition-colors">
+                  <a href={link.href} className="text-white/70 text-xs hover:text-secondary transition-colors">
                     {link.name}
                   </a>
                 </li>
@@ -182,11 +184,11 @@ const Footer = () => {
 
           {/* Support Links */}
           <div>
-            <h4 className="text-lg font-semibold mb-4 flex items-center">Support</h4>
-            <ul className="space-y-2 text-medium">
+            <h4 className="text-sm font-semibold mb-4 text-white">Support</h4>
+            <ul className="space-y-2">
               {supportLinks.map((link) => (
                 <li key={link.name}>
-                  <a href={link.href} className="text-gray-300 text-medium hover:text-white transition-colors">
+                  <a href={link.href} className="text-white/70 text-xs hover:text-secondary transition-colors">
                     {link.name}
                   </a>
                 </li>
@@ -195,39 +197,40 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Social Media & Legal */}
-        <div className="flex flex-col lg:flex-row justify-between items-center pt-8 mt-8 border-t border-gray-800">
-          {/* Legal Links */}
-          <div className="flex flex-wrap gap-6 mb-4 lg:mb-0">
-            {legalLinks.map((link) => (
-              <a key={link.name} href={link.href} className="text-gray-400 hover:text-white transition-colors text-sm">
-                {link.name}
+        {/* Bottom Section */}
+        <div className="pt-8 border-t border-white/50">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            {/* Legal Links */}
+            <div className="flex flex-wrap justify-center md:justify-start gap-4">
+              {legalLinks.map((link) => (
+                <a key={link.name} href={link.href} className="text-white hover:text-secondary transition-colors text-xs">
+                  {link.name}
+                </a>
+              ))}
+            </div>
+
+            {/* Social Media */}
+            <div className="flex items-center gap-4">
+              <span className="text-white text-xs">Follow us:</span>
+              <a href="https://facebook.com" className="text-white hover:text-secondary transition-colors">
+                <Facebook className="w-4 h-4" />
               </a>
-            ))}
+              <a href="https://twitter.com" className="text-white hover:text-secondary transition-colors">
+                <Twitter className="w-4 h-4" />
+              </a>
+              <a href="https://instagram.com" className="text-white hover:text-secondary transition-colors">
+                <Instagram className="w-4 h-4" />
+              </a>
+              <a href="https://youtube.com" className="text-white hover:text-secondary transition-colors">
+                <Youtube className="w-4 h-4" />
+              </a>
+            </div>
           </div>
 
-          {/* Social Media */}
-          <div className="flex items-center space-x-4">
-            <span className="text-gray-400 text-sm mr-2">Follow us:</span>
-            <a href="https://facebook.com" className="text-gray-400 hover:text-white transition-colors">
-              <Facebook className="w-5 h-5" />
-            </a>
-            <a href="https://twitter.com" className="text-gray-400 hover:text-white transition-colors">
-              <Twitter className="w-5 h-5" />
-            </a>
-            <a href="https://instagram.com" className="text-gray-400 hover:text-white transition-colors">
-              <Instagram className="w-5 h-5" />
-            </a>
-            <a href="https://youtube.com" className="text-gray-400 hover:text-white transition-colors">
-              <Youtube className="w-5 h-5" />
-            </a>
-          </div>
-        </div>
-
-        {/* Copyright */}
-        <Separator className="my-8 bg-gray-800" />
-        <div className="text-center">
-          <p className="text-gray-400 text-sm">© 2024 Tempeh Nusantara. All rights reserved. | Built for premium Indonesian tempeh export</p>
+          {/* Copyright */}
+          {/* <div className="text-center mt-6">
+            <p className="text-gray-600 text-xs">© 2024 Tempeh Nusantara. All rights reserved.</p>
+          </div> */}
         </div>
       </div>
     </footer>
