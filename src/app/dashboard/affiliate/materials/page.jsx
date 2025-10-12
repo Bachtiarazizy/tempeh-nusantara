@@ -1,454 +1,441 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@/components/shared/AuthContext";
-
-const mockMaterials = {
-  banners: [
-    {
-      id: 1,
-      name: "Banner Hero - Premium Tempe",
-      size: "1200x628",
-      format: "JPG",
-      url: "/materials/banner-hero.jpg",
-      description: "Banner utama untuk promosi di social media",
-      downloads: 45,
-    },
-    {
-      id: 2,
-      name: "Banner Instagram Story",
-      size: "1080x1920",
-      format: "PNG",
-      url: "/materials/banner-story.png",
-      description: "Desain khusus untuk Instagram Story",
-      downloads: 67,
-    },
-    {
-      id: 3,
-      name: "Banner Facebook Post",
-      size: "1200x630",
-      format: "JPG",
-      url: "/materials/banner-fb.jpg",
-      description: "Optimal untuk Facebook feed",
-      downloads: 32,
-    },
-  ],
-  productPhotos: [
-    {
-      id: 1,
-      name: "Premium Tempe Original",
-      images: 5,
-      format: "JPG, PNG",
-      url: "/products/premium-original/",
-      description: "Foto produk high-quality dengan berbagai angle",
-    },
-    {
-      id: 2,
-      name: "Organic Tempe Special",
-      images: 4,
-      format: "JPG, PNG",
-      url: "/products/organic-special/",
-      description: "Foto produk organik dengan packaging",
-    },
-    {
-      id: 3,
-      name: "Tempe Export Quality",
-      images: 6,
-      format: "JPG, PNG",
-      url: "/products/export-quality/",
-      description: "Foto produk export grade",
-    },
-  ],
-  copywriting: [
-    {
-      id: 1,
-      title: "Template WhatsApp Story",
-      category: "Social Media",
-      content: `🌾 TEMPE PREMIUM NUSANTARA 🌾
-
-Tempe berkualitas ekspor dengan bahan pilihan!
-✅ 100% Kedelai Premium
-✅ Proses Higienis
-✅ Kaya Protein & Nutrisi
-
-Order sekarang via link di bio!
-💰 Harga spesial untuk reseller
-
-#TempePremium #TempeSehat #MakananSehat`,
-      downloads: 89,
-    },
-    {
-      id: 2,
-      title: "Email Marketing - Bulk Order",
-      category: "Email",
-      content: `Subject: Penawaran Spesial Tempe Premium untuk Bisnis Anda
-
-Halo [Nama Customer],
-
-Kami dari Tempe Nusantara menawarkan produk tempe premium dengan kualitas ekspor untuk kebutuhan bisnis Anda.
-
-Keunggulan Produk:
-- Bahan baku kedelai pilihan
-- Proses produksi higienis dan modern
-- Sertifikat halal & BPOM
-- Packaging menarik siap jual
-
-Harga Spesial untuk Pembelian Grosir!
-Hubungi kami untuk penawaran terbaik.
-
-Salam,
-Tim Tempe Nusantara`,
-      downloads: 34,
-    },
-    {
-      id: 3,
-      title: "Caption Instagram - Edukasi Manfaat",
-      category: "Social Media",
-      content: `Tahukah kamu? 🤔
-
-Tempe adalah superfood asli Indonesia yang kaya manfaat:
-🌟 Tinggi protein nabati
-🌟 Mengandung probiotik alami
-🌟 Baik untuk pencernaan
-🌟 Cocok untuk diet sehat
-
-Tempe Nusantara hadir dengan kualitas terbaik untuk kesehatan keluarga Indonesia! 💪
-
-Order: [link]
-
-#TempeSehat #SuperfoodIndonesia #HidupSehat #TempeNusantara`,
-      downloads: 56,
-    },
-  ],
-  videos: [
-    {
-      id: 1,
-      name: "Product Showcase - 30 detik",
-      duration: "0:30",
-      size: "25 MB",
-      format: "MP4",
-      description: "Video singkat showcase produk untuk social media",
-      url: "/materials/video-showcase.mp4",
-    },
-    {
-      id: 2,
-      name: "Tutorial Masak Tempe",
-      duration: "2:15",
-      size: "120 MB",
-      format: "MP4",
-      description: "Tutorial memasak tempe untuk content marketing",
-      url: "/materials/video-tutorial.mp4",
-    },
-  ],
-  guidelines: [
-    {
-      id: 1,
-      title: "Panduan Brand Identity",
-      description: "Logo, warna, dan guideline penggunaan brand",
-      type: "PDF",
-      pages: 12,
-      url: "/guidelines/brand-identity.pdf",
-    },
-    {
-      id: 2,
-      title: "Cara Efektif Promosi di Social Media",
-      description: "Tips dan trik promosi produk di berbagai platform",
-      type: "PDF",
-      pages: 8,
-      url: "/guidelines/social-media-tips.pdf",
-    },
-    {
-      id: 3,
-      title: "FAQ Produk Tempe Nusantara",
-      description: "Daftar pertanyaan umum dan jawabannya",
-      type: "PDF",
-      pages: 5,
-      url: "/guidelines/faq-produk.pdf",
-    },
-  ],
-};
+import { Download, Search, Copy, CheckCircle2, FileText, Image, Video, FileImage, Book, TrendingUp, Clock, Grid3x3, List } from "lucide-react";
 
 export default function AffiliateMaterials() {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("banners");
+  const [materials, setMaterials] = useState([]);
+  const [stats, setStats] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [activeType, setActiveType] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [copied, setCopied] = useState(null);
+  const [viewMode, setViewMode] = useState("grid");
+  const [copiedId, setCopiedId] = useState(null);
+  const [downloadingId, setDownloadingId] = useState(null);
 
-  const copyToClipboard = (text, id) => {
-    navigator.clipboard?.writeText(text);
-    setCopied(id);
-    setTimeout(() => setCopied(null), 2000);
-  };
-
-  const downloadMaterial = (materialName) => {
-    alert(`Downloading: ${materialName}`);
-  };
-
-  const tabs = [
-    { id: "banners", label: "Banner & Poster", icon: "🖼️", count: mockMaterials.banners.length },
-    { id: "photos", label: "Foto Produk", icon: "📸", count: mockMaterials.productPhotos.length },
-    { id: "copywriting", label: "Copywriting", icon: "✍️", count: mockMaterials.copywriting.length },
-    { id: "videos", label: "Video", icon: "🎥", count: mockMaterials.videos.length },
-    { id: "guidelines", label: "Guidelines", icon: "📋", count: mockMaterials.guidelines.length },
+  const materialTypes = [
+    { id: "all", label: "All Materials", icon: Grid3x3 },
+    { id: "BANNER", label: "Banners", icon: Image },
+    { id: "PRODUCT_PHOTO", label: "Product Photos", icon: FileImage },
+    { id: "COPYWRITING", label: "Copywriting", icon: FileText },
+    { id: "VIDEO", label: "Videos", icon: Video },
+    { id: "GUIDELINE", label: "Guidelines", icon: Book },
   ];
 
+  useEffect(() => {
+    fetchMaterials();
+  }, [activeType, searchQuery]);
+
+  const fetchMaterials = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (activeType !== "all") params.append("type", activeType);
+      if (searchQuery) params.append("search", searchQuery);
+
+      const response = await fetch(`/api/affiliate/materials?${params}`);
+      const result = await response.json();
+
+      if (result.success) {
+        setMaterials(result.data.materials);
+        setStats(result.data.stats);
+      }
+    } catch (error) {
+      console.error("Error fetching materials:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownload = async (material) => {
+    try {
+      setDownloadingId(material.id);
+
+      const response = await fetch(`/api/affiliate/materials/${material.id}/download`, {
+        method: "POST",
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        await fetch(`/api/affiliate/materials/${material.id}/view`, {
+          method: "POST",
+        });
+
+        window.open(result.data.downloadUrl, "_blank");
+        fetchMaterials();
+      }
+    } catch (error) {
+      console.error("Error downloading:", error);
+      alert("Failed to download material");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const handleCopy = (text, id) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const formatFileSize = (bytes) => {
+    if (!bytes) return "N/A";
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  };
+
+  const formatDuration = (seconds) => {
+    if (!seconds) return "N/A";
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const filteredMaterials = materials.filter((m) => activeType === "all" || m.type === activeType);
+
+  if (loading && materials.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading materials...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-6 text-white">
-        <h2 className="text-2xl font-bold mb-2">Marketing Materials</h2>
-        <p className="opacity-90">Download materi promosi untuk meningkatkan penjualan Anda</p>
+      <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 rounded-2xl p-8 text-white shadow-xl">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Marketing Materials</h1>
+            <p className="text-purple-100 text-lg">Professional assets to boost your affiliate success</p>
+          </div>
+          <div className="hidden md:flex items-center gap-4">
+            <div className="text-center bg-white/10 backdrop-blur-sm rounded-lg px-6 py-3">
+              <div className="text-2xl font-bold">{materials.length}</div>
+              <div className="text-xs text-purple-200">Total Assets</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-primary">{mockMaterials.banners.length + mockMaterials.productPhotos.length}</p>
-              <p className="text-sm text-gray-600">Visual Assets</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-primary">{mockMaterials.copywriting.length}</p>
-              <p className="text-sm text-gray-600">Copy Templates</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-primary">{mockMaterials.videos.length}</p>
-              <p className="text-sm text-gray-600">Video Content</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-primary">{mockMaterials.guidelines.length}</p>
-              <p className="text-sm text-gray-600">Guidelines</p>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {materialTypes.slice(1).map((type) => {
+          const Icon = type.icon;
+          const count = stats[type.id] || 0;
+          return (
+            <Card key={type.id} className="hover:shadow-lg transition-all cursor-pointer border-2 hover:border-purple-300">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                    <Icon className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-gray-900">{count}</div>
+                    <div className="text-xs text-gray-600">{type.label}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
-      {/* Tabs */}
+      {/* Filters & Search */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex gap-2 overflow-x-auto">
-            {tabs.map((tab) => (
-              <Button key={tab.id} variant={activeTab === tab.id ? "default" : "outline"} onClick={() => setActiveTab(tab.id)} className="whitespace-nowrap">
-                <span className="mr-2">{tab.icon}</span>
-                {tab.label}
-                <Badge variant="secondary" className="ml-2">
-                  {tab.count}
-                </Badge>
+        <CardContent className="p-6">
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Type Filter */}
+            <div className="flex-1">
+              <div className="flex flex-wrap gap-2">
+                {materialTypes.map((type) => {
+                  const Icon = type.icon;
+                  const count = type.id === "all" ? materials.length : stats[type.id] || 0;
+
+                  return (
+                    <Button key={type.id} variant={activeType === type.id ? "default" : "outline"} size="sm" onClick={() => setActiveType(type.id)} className="gap-2">
+                      <Icon className="w-4 h-4" />
+                      {type.label}
+                      <Badge variant="secondary" className="ml-1">
+                        {count}
+                      </Badge>
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Search */}
+            <div className="flex gap-2">
+              <div className="relative flex-1 lg:w-64">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input placeholder="Search materials..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
+              </div>
+              <Button variant="outline" size="icon" onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}>
+                {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid3x3 className="w-4 h-4" />}
               </Button>
-            ))}
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Search */}
-      <Card>
-        <CardContent className="p-4">
-          <Input placeholder="Cari material..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full" />
-        </CardContent>
-      </Card>
-
-      {/* Banners Tab */}
-      {activeTab === "banners" && (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mockMaterials.banners.map((banner) => (
-            <Card key={banner.id}>
-              <CardHeader>
-                <div className="aspect-video bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center mb-4">
-                  <span className="text-4xl">🖼️</span>
-                </div>
-                <CardTitle className="text-lg">{banner.name}</CardTitle>
-                <CardDescription>{banner.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Size:</span>
-                    <span className="font-medium">{banner.size}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Format:</span>
-                    <span className="font-medium">{banner.format}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Downloads:</span>
-                    <span className="font-medium">{banner.downloads}x</span>
-                  </div>
-                </div>
-                <Button className="w-full" onClick={() => downloadMaterial(banner.name)}>
-                  Download
-                </Button>
-              </CardContent>
-            </Card>
+      {/* Materials Grid/List */}
+      {filteredMaterials.length === 0 ? (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Image className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No materials found</h3>
+            <p className="text-gray-600">Try adjusting your filters or search query</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className={viewMode === "grid" ? "grid md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
+          {filteredMaterials.map((material) => (
+            <MaterialCard
+              key={material.id}
+              material={material}
+              viewMode={viewMode}
+              onDownload={handleDownload}
+              onCopy={handleCopy}
+              copiedId={copiedId}
+              downloadingId={downloadingId}
+              formatFileSize={formatFileSize}
+              formatDuration={formatDuration}
+            />
           ))}
         </div>
       )}
 
-      {/* Product Photos Tab */}
-      {activeTab === "photos" && (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mockMaterials.productPhotos.map((product) => (
-            <Card key={product.id}>
-              <CardHeader>
-                <div className="aspect-square bg-gradient-to-br from-green-100 to-blue-100 rounded-lg flex items-center justify-center mb-4">
-                  <span className="text-5xl">📸</span>
-                </div>
-                <CardTitle className="text-lg">{product.name}</CardTitle>
-                <CardDescription>{product.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Images:</span>
-                    <span className="font-medium">{product.images} files</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Format:</span>
-                    <span className="font-medium">{product.format}</span>
-                  </div>
-                </div>
-                <Button className="w-full" onClick={() => downloadMaterial(product.name)}>
-                  Download All
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Copywriting Tab */}
-      {activeTab === "copywriting" && (
-        <div className="space-y-4">
-          {mockMaterials.copywriting.map((copy) => (
-            <Card key={copy.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle>{copy.title}</CardTitle>
-                    <CardDescription>
-                      <Badge variant="secondary" className="mt-1">
-                        {copy.category}
-                      </Badge>
-                    </CardDescription>
-                  </div>
-                  <div className="text-sm text-gray-600">{copy.downloads} downloads</div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                  <pre className="text-sm whitespace-pre-wrap font-sans">{copy.content}</pre>
-                </div>
-                <div className="flex gap-2">
-                  <Button className="flex-1" onClick={() => copyToClipboard(copy.content, copy.id)} variant={copied === copy.id ? "default" : "outline"}>
-                    {copied === copy.id ? "✓ Copied!" : "Copy Text"}
-                  </Button>
-                  <Button variant="outline" onClick={() => downloadMaterial(copy.title)}>
-                    Download
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Videos Tab */}
-      {activeTab === "videos" && (
-        <div className="grid md:grid-cols-2 gap-6">
-          {mockMaterials.videos.map((video) => (
-            <Card key={video.id}>
-              <CardHeader>
-                <div className="aspect-video bg-gradient-to-br from-red-100 to-orange-100 rounded-lg flex items-center justify-center mb-4">
-                  <span className="text-5xl">🎥</span>
-                </div>
-                <CardTitle className="text-lg">{video.name}</CardTitle>
-                <CardDescription>{video.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Duration:</span>
-                    <span className="font-medium">{video.duration}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Size:</span>
-                    <span className="font-medium">{video.size}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Format:</span>
-                    <span className="font-medium">{video.format}</span>
-                  </div>
-                </div>
-                <Button className="w-full" onClick={() => downloadMaterial(video.name)}>
-                  Download Video
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Guidelines Tab */}
-      {activeTab === "guidelines" && (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mockMaterials.guidelines.map((guide) => (
-            <Card key={guide.id}>
-              <CardHeader>
-                <div className="w-full h-32 bg-gradient-to-br from-amber-100 to-yellow-100 rounded-lg flex items-center justify-center mb-4">
-                  <span className="text-5xl">📋</span>
-                </div>
-                <CardTitle className="text-lg">{guide.title}</CardTitle>
-                <CardDescription>{guide.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Type:</span>
-                    <span className="font-medium">{guide.type}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Pages:</span>
-                    <span className="font-medium">{guide.pages} pages</span>
-                  </div>
-                </div>
-                <Button className="w-full" onClick={() => downloadMaterial(guide.title)}>
-                  Download PDF
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Tips Card */}
-      <Card className="border-blue-200 bg-blue-50">
+      {/* Tips Section */}
+      <Card className="border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
         <CardContent className="p-6">
-          <h3 className="font-semibold text-blue-900 mb-2">💡 Tips Menggunakan Materials</h3>
-          <ul className="space-y-2 text-sm text-blue-800">
-            <li>✓ Sesuaikan copywriting dengan tone & style audience Anda</li>
-            <li>✓ Gunakan banner sesuai ukuran platform (IG Story, FB Post, dll)</li>
-            <li>✓ Jangan lupa sertakan referral link Anda di setiap promosi</li>
-            <li>✓ Konsisten posting untuk hasil maksimal</li>
-            <li>✓ Baca guidelines brand untuk memastikan promosi sesuai standar</li>
-          </ul>
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+              <TrendingUp className="w-6 h-6 text-purple-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-purple-900 mb-3 text-lg">Pro Tips for Maximum Impact</h3>
+              <ul className="grid md:grid-cols-2 gap-3 text-sm text-purple-800">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span>Always include your referral link in every promotion</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span>Customize copywriting to match your audience tone</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span>Use platform-specific materials for best results</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span>Post consistently - aim for 3-5x per week minimum</span>
+                </li>
+              </ul>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function MaterialCard({ material, viewMode, onDownload, onCopy, copiedId, downloadingId, formatFileSize, formatDuration }) {
+  const typeConfig = {
+    BANNER: { icon: Image, color: "blue", bgColor: "bg-blue-50" },
+    PRODUCT_PHOTO: { icon: FileImage, color: "green", bgColor: "bg-green-50" },
+    COPYWRITING: { icon: FileText, color: "purple", bgColor: "bg-purple-50" },
+    VIDEO: { icon: Video, color: "red", bgColor: "bg-red-50" },
+    GUIDELINE: { icon: Book, color: "amber", bgColor: "bg-amber-50" },
+  };
+
+  const config = typeConfig[material.type];
+  const Icon = config.icon;
+
+  if (viewMode === "list") {
+    return (
+      <Card className="hover:shadow-lg transition-all">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-6">
+            <div className={`w-20 h-20 ${config.bgColor} rounded-lg flex items-center justify-center flex-shrink-0`}>
+              <Icon className={`w-8 h-8 text-${config.color}-600`} />
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-4 mb-2">
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-900 mb-1">{material.title}</h3>
+                  <p className="text-sm text-gray-600 line-clamp-2">{material.description}</p>
+                </div>
+                <Badge variant="secondary">{material.category}</Badge>
+              </div>
+
+              <div className="flex items-center gap-6 text-sm text-gray-600 mt-3">
+                {material.fileFormat && (
+                  <div className="flex items-center gap-1">
+                    <FileText className="w-4 h-4" />
+                    {material.fileFormat}
+                  </div>
+                )}
+                {material.fileSize && (
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    {formatFileSize(material.fileSize)}
+                  </div>
+                )}
+                <div className="flex items-center gap-1">
+                  <Download className="w-4 h-4" />
+                  {material.downloadCount} downloads
+                </div>
+                {material.hasDownloaded && (
+                  <Badge variant="secondary" className="bg-green-100 text-green-700">
+                    Downloaded
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              {material.type === "COPYWRITING" && (
+                <Button variant="outline" size="sm" onClick={() => onCopy(material.content, material.id)} disabled={copiedId === material.id}>
+                  {copiedId === material.id ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy
+                    </>
+                  )}
+                </Button>
+              )}
+              <Button onClick={() => onDownload(material)} disabled={downloadingId === material.id} size="sm">
+                {downloadingId === material.id ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Downloading...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="hover:shadow-xl transition-all h-full flex flex-col">
+      <CardHeader>
+        <div className={`aspect-video ${config.bgColor} rounded-lg flex items-center justify-center mb-4 relative overflow-hidden`}>
+          <Icon className={`w-16 h-16 text-${config.color}-400`} />
+          {material.hasDownloaded && (
+            <div className="absolute top-2 right-2">
+              <Badge className="bg-green-500">
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+                Downloaded
+              </Badge>
+            </div>
+          )}
+        </div>
+        <div className="flex items-start justify-between gap-2">
+          <CardTitle className="text-lg line-clamp-2">{material.title}</CardTitle>
+          <Badge variant="secondary" className="flex-shrink-0">
+            {material.type.replace("_", " ")}
+          </Badge>
+        </div>
+        <CardDescription className="line-clamp-2">{material.description}</CardDescription>
+      </CardHeader>
+
+      <CardContent className="flex-1 flex flex-col">
+        <div className="space-y-2 mb-4 flex-1">
+          {material.category && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Category:</span>
+              <span className="font-medium">{material.category}</span>
+            </div>
+          )}
+          {material.fileFormat && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Format:</span>
+              <span className="font-medium">{material.fileFormat}</span>
+            </div>
+          )}
+          {material.fileSize && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Size:</span>
+              <span className="font-medium">{formatFileSize(material.fileSize)}</span>
+            </div>
+          )}
+          {material.duration && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Duration:</span>
+              <span className="font-medium">{formatDuration(material.duration)}</span>
+            </div>
+          )}
+          {material.width && material.height && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Dimensions:</span>
+              <span className="font-medium">
+                {material.width}x{material.height}
+              </span>
+            </div>
+          )}
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Downloads:</span>
+            <span className="font-medium">{material.downloadCount}x</span>
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          {material.type === "COPYWRITING" && (
+            <Button variant="outline" size="sm" className="flex-1" onClick={() => onCopy(material.content, material.id)} disabled={copiedId === material.id}>
+              {copiedId === material.id ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy
+                </>
+              )}
+            </Button>
+          )}
+          <Button className="flex-1" onClick={() => onDownload(material)} disabled={downloadingId === material.id} size="sm">
+            {downloadingId === material.id ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                Downloading...
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4 mr-2" />
+                Download
+              </>
+            )}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

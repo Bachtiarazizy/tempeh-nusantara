@@ -6,14 +6,18 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, Star, Check, ShoppingCart } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useCart } from "./cart-context";
+import { useWishlist } from "./wishlist-context";
 
-const ProductCard = ({ id, name, price, originalPrice, weight, image, category, rating = 0, reviewCount = 0, isNew = false, isOnSale = false, discount = 0, onToggleFavorite, className = "", slug }) => {
+const ProductCard = ({ id, name, price, originalPrice, weight, image, category, rating = 0, reviewCount = 0, isNew = false, isOnSale = false, discount = 0, className = "", slug, variant = null }) => {
   const [mounted, setMounted] = useState(false);
-  const [isFavorited, setIsFavorited] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
 
   const { addToCart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
+
+  // Check if product is in wishlist
+  const isFavorited = isInWishlist(id);
 
   // Ensure component is hydrated before showing interactive elements
   useEffect(() => {
@@ -44,11 +48,8 @@ const ProductCard = ({ id, name, price, originalPrice, weight, image, category, 
     setIsAdding(true);
 
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      // Add to cart using context
-      addToCart({
+      // Add to cart using context (with API call)
+      const success = await addToCart({
         id,
         name,
         price,
@@ -56,11 +57,14 @@ const ProductCard = ({ id, name, price, originalPrice, weight, image, category, 
         weight,
         image,
         category,
+        variant,
       });
 
-      // Show success feedback
-      setJustAdded(true);
-      setTimeout(() => setJustAdded(false), 2000);
+      if (success) {
+        // Show success feedback
+        setJustAdded(true);
+        setTimeout(() => setJustAdded(false), 2000);
+      }
     } catch (error) {
       console.error("Error adding to cart:", error);
     } finally {
@@ -68,18 +72,25 @@ const ProductCard = ({ id, name, price, originalPrice, weight, image, category, 
     }
   };
 
-  const handleToggleFavorite = (e) => {
+  const handleToggleFavorite = async (e) => {
     e.stopPropagation(); // Prevent card click navigation
     if (!mounted) return;
 
-    setIsFavorited(!isFavorited);
-    if (onToggleFavorite) {
-      onToggleFavorite(id, !isFavorited);
-    }
+    // Toggle wishlist using context (with API call)
+    await toggleWishlist({
+      id,
+      name,
+      price,
+      originalPrice,
+      weight,
+      image,
+      category,
+      slug: productSlug,
+    });
   };
 
   const formatPrice = (price) => {
-    return `$${price}`;
+    return `$${price.toFixed(2)}`;
   };
 
   return (

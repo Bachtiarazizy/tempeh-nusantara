@@ -1,23 +1,25 @@
 export const getNavigationMenu = (role) => {
   const menus = {
-    buyer: [
-      { id: 'dashboard', label: 'Dashboard', icon: 'home', href: '/dashboard/buyer' },
-      { id: 'orders', label: 'Pesanan Saya', icon: 'shopping-bag', href: '/dashboard/buyer/orders' },
-      { id: 'profile', label: 'Profil', icon: 'user', href: '/dashboard/buyer/profile' }
+    ADMIN: [
+      { id: 1, label: "Dashboard", href: "/dashboard", icon: "home" },
+      { id: 2, label: "Produk", href: "/dashboard/products", icon: "package" },
+      { id: 3, label: "Pesanan", href: "/dashboard/orders", icon: "shopping-bag" },
+      { id: 4, label: "Affiliate", href: "/dashboard/affiliates", icon: "users" },
+      { id: 5, label: "Pengaturan", href: "/dashboard/settings", icon: "settings" },
     ],
-    admin: [
-      { id: 'dashboard', label: 'Dashboard', icon: 'home', href: '/dashboard/admin' },
-      { id: 'products', label: 'Manajemen Produk', icon: 'package', href: '/dashboard/admin/products' },
-      { id: 'orders', label: 'Manajemen Pesanan', icon: 'shopping-bag', href: '/dashboard/admin/orders' },
-      { id: 'affiliates', label: 'Manajemen Affiliate', icon: 'users', href: '/dashboard/admin/affiliates' },
-      { id: 'settings', label: 'Pengaturan', icon: 'settings', href: '/dashboard/admin/settings' }
+    AFFILIATE: [
+      { id: 1, label: "Dashboard", href: "/dashboard/affiliate", icon: "home" },
+      { id: 2, label: "Performa", href: "/dashboard/affiliate/performance", icon: "trending-up" },
+      { id: 3, label: "Marketing Materials", href: "/dashboard/affiliate/materials", icon: "download" },
+      { id: 4, label: "Profil", href: "/dashboard/affiliate/profile", icon: "user" },
     ],
-    affiliate: [
-      { id: 'dashboard', label: 'Dashboard', icon: 'home', href: '/dashboard/affiliate' },
-      { id: 'performance', label: 'Performa', icon: 'trending-up', href: '/dashboard/affiliate/performance' },
-      { id: 'materials', label: 'Materi Marketing', icon: 'download', href: '/dashboard/affiliate/materials' },
-      { id: 'profile', label: 'Profil', icon: 'user', href: '/dashboard/affiliate/profile' }
-    ]
+    BUYER: [
+      { id: 1, label: "Dashboard", href: "/buyer", icon: "home" },
+      { id: 2, label: "Pesanan Saya", href: "/buyer/orders", icon: "shopping-bag" },
+      { id: 3, label: "Katalog Produk", href: "/products", icon: "package" },
+      { id: 4, label: "Profil", href: "/buyer/profile", icon: "user" },
+    ],
   };
-  return menus[role] || [];
+
+  return menus[role] || menus.BUYER;
 };

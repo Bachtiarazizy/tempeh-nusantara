@@ -1,48 +1,61 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useAuth } from "@/components/shared/AuthContext";
-import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [formData, setFormData] = useState({ username: "", password: "" });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
-  const { login, user, isLoading } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    if (user) {
-      // Redirect based on role
-      const redirectPath = `/dashboard/${user.role}`;
-      router.push(redirectPath);
-    }
-  }, [user, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
-    const result = await login(formData.username, formData.password);
-    if (!result.success) {
-      setError(result.error);
+    try {
+      const result = await signIn("credentials", {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError(result.error);
+        setIsLoading(false);
+        return;
+      }
+
+      if (result?.ok) {
+        // Fetch session to get user role
+        const response = await fetch("/api/auth/session");
+        const session = await response.json();
+
+        // Redirect based on role
+        if (session?.user?.role === "BUYER") {
+          router.push("/buyer");
+        } else if (session?.user?.role === "AFFILIATE") {
+          router.push("/dashboard/affiliate");
+        } else if (session?.user?.role === "ADMIN") {
+          router.push("/dashboard");
+        } else {
+          router.push("/dashboard");
+        }
+
+        router.refresh();
+      }
+    } catch (error) {
+      setError("Terjadi kesalahan. Silakan coba lagi.");
+      setIsLoading(false);
     }
   };
-
-  if (user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Redirecting to dashboard...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
@@ -60,8 +73,8 @@ export default function LoginPage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="username">Username</Label>
-                <Input id="username" type="text" value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })} disabled={isLoading} required />
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} disabled={isLoading} required />
               </div>
               <div>
                 <Label htmlFor="password">Password</Label>
@@ -86,20 +99,10 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            {/* Demo credentials */}
-            <div className="mt-6 space-y-2 text-sm text-gray-600">
-              <p className="font-medium">Demo Credentials:</p>
-              <div className="grid grid-cols-1 gap-2">
-                <div className="bg-blue-50 p-2 rounded">
-                  <strong>Buyer:</strong> buyer / buyer123
-                </div>
-                <div className="bg-green-50 p-2 rounded">
-                  <strong>Admin:</strong> admin / admin123
-                </div>
-                <div className="bg-purple-50 p-2 rounded">
-                  <strong>Affiliate:</strong> affiliate / affiliate123
-                </div>
-              </div>
+            <div className="mt-4 text-center">
+              <Button variant="link" onClick={() => router.push("/register")} className="text-sm">
+                Belum punya akun? Daftar sekarang
+              </Button>
             </div>
           </CardContent>
         </Card>

@@ -2,23 +2,39 @@
 
 import React from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getNavigationMenu } from "../shared/navigation";
 import { Icon } from "../ui/icon";
-import { useAuth } from "../shared/AuthContext";
 
 export const Sidebar = ({ isOpen, setIsOpen }) => {
-  const { user, logout } = useAuth();
+  const { data: session, status } = useSession();
   const router = useRouter();
-  const pathname = usePathname(); // PERBAIKAN: gunakan usePathname
+  const pathname = usePathname();
+
+  const user = session?.user;
   const menuItems = getNavigationMenu(user?.role);
 
-  const handleLogout = () => {
-    logout();
-    router.push("/login");
+  const handleLogout = async () => {
+    await signOut({
+      callbackUrl: "/",
+      redirect: true,
+    });
   };
 
+  // Show loading state
+  if (status === "loading") {
+    return (
+      <aside className="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 z-50">
+        <div className="flex items-center justify-center h-full">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </aside>
+    );
+  }
+
+  // Don't render if not authenticated
   if (!user) return null;
 
   return (
@@ -44,18 +60,19 @@ export const Sidebar = ({ isOpen, setIsOpen }) => {
         </div>
 
         {/* User Info */}
-        <div className="p-4">
-          <div className="text-sm text-gray-600 mb-4">
+        <div className="p-4 border-b border-gray-200">
+          <div className="text-sm text-gray-600 mb-2">
             <p>Welcome back,</p>
-            <p className="font-medium text-primary">{user.name}</p>
-            <Badge variant="secondary" className="mt-1 text-xs">
-              {user.role.toUpperCase()}
-            </Badge>
+            <p className="font-medium text-primary text-base">{user.name}</p>
+            <p className="text-xs text-gray-500 mt-1">{user.email}</p>
           </div>
+          <Badge variant="secondary" className="mt-2 text-xs">
+            {user.role}
+          </Badge>
         </div>
 
         {/* Navigation Menu */}
-        <nav className="px-4 flex-1 overflow-y-auto">
+        <nav className="px-4 py-4 flex-1 overflow-y-auto" style={{ maxHeight: "calc(100vh - 280px)" }}>
           <ul className="space-y-2">
             {menuItems.map((item) => {
               const isActive = pathname === item.href;
@@ -78,8 +95,8 @@ export const Sidebar = ({ isOpen, setIsOpen }) => {
         </nav>
 
         {/* Logout Button */}
-        <div className="absolute bottom-4 left-4 right-4">
-          <Button onClick={handleLogout} variant="outline" className="w-full">
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
+          <Button onClick={handleLogout} variant="outline" className="w-full text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200">
             <Icon name="log-out" className="w-4 h-4 mr-2" />
             Logout
           </Button>

@@ -4,15 +4,25 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ShoppingCart, Heart, User, Menu, Search, Home, Package, Info, Mail, X, Plus, Minus } from "lucide-react";
+import { ShoppingCart, Heart, User, Menu, Search, Package, Plus, Minus, X, LogOut, LogIn, UserPlus } from "lucide-react";
 import { useState } from "react";
+import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useCart } from "../shared/cart-context";
+import { useWishlist } from "../shared/wishlist-context";
 import Image from "next/image";
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const { items, totalItems, uniqueProducts, totalPrice, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { items: wishlistItems, totalItems: wishlistTotal, removeFromWishlist, clearWishlist } = useWishlist();
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  const user = session?.user;
+  const isLoading = status === "loading";
 
   const formatPrice = (price) => {
     return `$${price.toFixed(2)}`;
@@ -27,9 +37,34 @@ const Navbar = () => {
 
   const handleProceedToCheckout = () => {
     setIsCartOpen(false);
-    // Navigate to checkout page
     if (typeof window !== "undefined") {
       window.location.href = "/checkout";
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut({
+      callbackUrl: "/",
+      redirect: true,
+    });
+  };
+
+  const handleLogin = () => {
+    router.push("/login");
+  };
+
+  const handleRegister = () => {
+    router.push("/register");
+  };
+
+  const handleDashboard = () => {
+    // Route berdasarkan role user
+    if (user?.role === "ADMIN") {
+      router.push("/dashboard");
+    } else if (user?.role === "AFFILIATE") {
+      router.push("/dashboard/affiliate");
+    } else {
+      router.push("/buyer");
     }
   };
 
@@ -42,7 +77,6 @@ const Navbar = () => {
       <div className="flex-1 min-w-0">
         <h4 className="text-sm font-medium text-gray-900 truncate">{item.productName || item.name}</h4>
 
-        {/* Variant Details */}
         <div className="mt-1 space-y-1">
           {item.variant && (
             <p className="text-xs text-gray-600">
@@ -56,18 +90,15 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Price per unit */}
         <div className="mt-2 flex items-center justify-between">
           <p className="text-sm font-semibold text-green-600">{formatPrice(item.price)}</p>
           <p className="text-xs text-gray-500">each</p>
         </div>
 
-        {/* Total price for this item */}
         {item.quantity > 1 && <p className="text-xs text-gray-500 mt-1">Total: {formatPrice(item.price * item.quantity)}</p>}
       </div>
 
       <div className="flex flex-col items-center space-y-2">
-        {/* Quantity Controls */}
         <div className="flex items-center space-x-1">
           <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}>
             <Minus className="w-3 h-3" />
@@ -80,7 +111,6 @@ const Navbar = () => {
           </Button>
         </div>
 
-        {/* Remove Button */}
         <Button variant="ghost" size="icon" className="h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => removeFromCart(item.cartItemId)}>
           <X className="w-3 h-3" />
         </Button>
@@ -154,16 +184,13 @@ const Navbar = () => {
                     </div>
                   ) : (
                     <>
-                      {/* Cart Items */}
                       <div className="flex-1 overflow-y-auto">
                         {items.map((item) => (
                           <CartItem key={item.cartItemId} item={item} />
                         ))}
                       </div>
 
-                      {/* Cart Summary */}
                       <div className="border-t border-gray-200 pt-4 mt-4">
-                        {/* Summary Details */}
                         <div className="space-y-2 mb-4">
                           <div className="flex justify-between text-sm">
                             <span>
@@ -183,7 +210,6 @@ const Navbar = () => {
                           <span className="text-lg font-bold text-green-600">{formatPrice(totalPrice + (totalPrice > 50 ? 0 : 10))}</span>
                         </div>
 
-                        {/* Action Buttons */}
                         <div className="space-y-3">
                           <Button className="w-full bg-green-600 hover:bg-green-700" onClick={handleProceedToCheckout}>
                             Proceed to Checkout
@@ -204,32 +230,63 @@ const Navbar = () => {
               </SheetContent>
             </Sheet>
 
-            {/* User Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <User className="w-5 h-5" />
+            {/* User Menu - Desktop */}
+            {isLoading ? (
+              <div className="hidden md:flex items-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400"></div>
+              </div>
+            ) : user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="hidden md:flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                      <span className="text-white font-semibold text-sm">{user.name?.charAt(0).toUpperCase()}</span>
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                      <p className="text-xs text-gray-500">{user.role}</p>
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div>
+                      <p className="font-medium">{user.name}</p>
+                      <p className="text-xs text-gray-500 font-normal">{user.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleDashboard}>
+                    <User className="w-4 h-4 mr-2" />
+                    Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Package className="w-4 h-4 mr-2" />
+                    My Orders
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Heart className="w-4 h-4 mr-2" />
+                    Wishlist
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-red-600" onClick={handleLogout}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="hidden md:flex items-center space-x-2">
+                <Button variant="ghost" size="sm" onClick={handleLogin}>
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Login
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="w-4 h-4 mr-2" />
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Package className="w-4 h-4 mr-2" />
-                  Orders
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Heart className="w-4 h-4 mr-2" />
-                  Wishlist
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-600">Sign out</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={handleRegister}>
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Register
+                </Button>
+              </div>
+            )}
 
             {/* Mobile menu button */}
             <div className="md:hidden">
@@ -247,6 +304,24 @@ const Navbar = () => {
                   </SheetHeader>
 
                   <div className="mt-6">
+                    {/* User Info Mobile */}
+                    {user && (
+                      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
+                            <span className="text-white font-semibold">{user.name?.charAt(0).toUpperCase()}</span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{user.name}</p>
+                            <p className="text-xs text-gray-500">{user.email}</p>
+                            <Badge variant="secondary" className="mt-1 text-xs">
+                              {user.role}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <nav className="space-y-2">
                       {navigation.map((item) => (
                         <a
@@ -270,10 +345,61 @@ const Navbar = () => {
                           <Heart className="w-5 h-5 mr-3" />
                           Wishlist
                         </Button>
-                        <Button variant="ghost" className="w-full justify-start">
-                          <User className="w-5 h-5 mr-3" />
-                          Account
-                        </Button>
+
+                        {user ? (
+                          <>
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start"
+                              onClick={() => {
+                                handleDashboard();
+                                setIsMobileMenuOpen(false);
+                              }}
+                            >
+                              <User className="w-5 h-5 mr-3" />
+                              Dashboard
+                            </Button>
+                            <Button variant="ghost" className="w-full justify-start">
+                              <Package className="w-5 h-5 mr-3" />
+                              My Orders
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => {
+                                handleLogout();
+                                setIsMobileMenuOpen(false);
+                              }}
+                            >
+                              <LogOut className="w-5 h-5 mr-3" />
+                              Sign Out
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start"
+                              onClick={() => {
+                                handleLogin();
+                                setIsMobileMenuOpen(false);
+                              }}
+                            >
+                              <LogIn className="w-5 h-5 mr-3" />
+                              Login
+                            </Button>
+                            <Button
+                              className="w-full justify-start bg-green-600 hover:bg-green-700"
+                              onClick={() => {
+                                handleRegister();
+                                setIsMobileMenuOpen(false);
+                              }}
+                            >
+                              <UserPlus className="w-5 h-5 mr-3" />
+                              Register
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

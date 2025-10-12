@@ -1,6 +1,6 @@
 import { Noto_Sans, Gloock, Montserrat, Roboto, Playfair_Display } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/components/shared/AuthContext";
+import { Providers } from "./providers";
 
 const gloock = Playfair_Display({
   variable: "--font-gloock",
@@ -22,7 +22,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${gloock.variable} ${notoSans.variable} antialiased`}>
-        <AuthProvider>{children}</AuthProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
