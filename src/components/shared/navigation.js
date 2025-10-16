@@ -16,8 +16,7 @@ export const getNavigationMenu = (role) => {
     BUYER: [
       { id: 1, label: "Dashboard", href: "/buyer", icon: "home" },
       { id: 2, label: "Pesanan Saya", href: "/buyer/orders", icon: "shopping-bag" },
-      { id: 3, label: "Katalog Produk", href: "/products", icon: "package" },
-      { id: 4, label: "Profil", href: "/buyer/profile", icon: "user" },
+      { id: 3, label: "Profil", href: "/buyer/profile", icon: "user" },
     ],
   };
 

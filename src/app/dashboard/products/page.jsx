@@ -4,10 +4,14 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import { Package, CheckCircle, XCircle, TrendingUp, DollarSign, Box, Search, Filter, Plus, Edit, Eye, Download, AlertCircle, Layers, BarChart3, Archive } from "lucide-react";
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import ProductFormModal from "@/components/shared/product-modal-form";
+
+const CHART_COLORS = ["#8B4513", "#A0522D", "#CD853F", "#DEB887", "#F5DEB3", "#FFE4C4"];
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
@@ -18,11 +22,12 @@ export default function AdminProducts() {
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
+    inactive: 0,
     totalStock: 0,
     avgPrice: 0,
+    lowStock: 0,
   });
 
-  // Pagination & Filters
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
@@ -35,7 +40,23 @@ export default function AdminProducts() {
     totalPages: 0,
   });
 
-  // Fetch products from API
+  // Mock data untuk charts - replace dengan data real dari API
+  const stockTrendData = [
+    { name: "Jan", stock: 450 },
+    { name: "Feb", stock: 520 },
+    { name: "Mar", stock: 480 },
+    { name: "Apr", stock: 600 },
+    { name: "May", stock: 550 },
+    { name: "Jun", stock: 680 },
+  ];
+
+  const categoryDistribution = [
+    { name: "Tempe Kedelai", value: 45 },
+    { name: "Tempe Gembus", value: 25 },
+    { name: "Tempe Kacang", value: 20 },
+    { name: "Lainnya", value: 10 },
+  ];
+
   const fetchProducts = async () => {
     try {
       setLoading(true);
@@ -68,33 +89,33 @@ export default function AdminProducts() {
     }
   };
 
-  // Calculate statistics
   const calculateStats = (productsData) => {
     const activeProducts = productsData.filter((p) => p.status === "ACTIVE");
+    const inactiveProducts = productsData.filter((p) => p.status === "INACTIVE");
     const totalStock = productsData.reduce((sum, p) => sum + (p.stock || 0), 0);
     const avgPrice = productsData.length > 0 ? Math.round(productsData.reduce((sum, p) => sum + p.price, 0) / productsData.length) : 0;
+    const lowStock = productsData.filter((p) => p.stock < 50).length;
 
     setStats({
       total: productsData.length,
       active: activeProducts.length,
+      inactive: inactiveProducts.length,
       totalStock,
       avgPrice,
+      lowStock,
     });
   };
 
-  // Fetch products on component mount and when filters change
   useEffect(() => {
     fetchProducts();
   }, [page, limit, search, status, category]);
 
-  // Handle search with debounce
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearch(value);
-    setPage(1); // Reset to first page
+    setPage(1);
   };
 
-  // Handle toggle status
   const handleToggleStatus = async (productId, currentStatus) => {
     try {
       const newStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
@@ -107,43 +128,44 @@ export default function AdminProducts() {
       });
 
       if (response.ok) {
-        fetchProducts(); // Refresh data
+        fetchProducts();
+        toast.success(`Produk berhasil ${newStatus === "ACTIVE" ? "diaktifkan" : "dinonaktifkan"}!`);
+      } else {
+        throw new Error("Failed to update status");
       }
     } catch (err) {
       console.error("Error toggling status:", err);
+      toast.error("Gagal mengubah status produk");
     }
   };
 
-  // Handle create product
   const handleCreateProduct = () => {
     setSelectedProduct(null);
     setIsModalOpen(true);
   };
 
-  // Handle edit product
   const handleEditProduct = (product) => {
     setSelectedProduct(product);
     setIsModalOpen(true);
   };
 
-  // Handle modal close
   const handleModalClose = () => {
     setIsModalOpen(false);
     setSelectedProduct(null);
   };
 
-  // Handle product saved
   const handleProductSaved = () => {
-    fetchProducts(); // Refresh data
+    fetchProducts();
     handleModalClose();
+    toast.success(selectedProduct ? "Produk berhasil diupdate!" : "Produk baru berhasil ditambahkan!");
   };
 
   if (loading && products.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Memuat data produk...</p>
+          <p className="text-muted-foreground">Memuat data produk...</p>
         </div>
       </div>
     );
@@ -151,144 +173,218 @@ export default function AdminProducts() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">Error: {error}</p>
-          <Button onClick={fetchProducts}>Coba Lagi</Button>
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6 text-center">
+            <div className="w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-6 h-6 text-destructive" />
+            </div>
+            <p className="text-destructive mb-4 font-medium">Error: {error}</p>
+            <Button onClick={fetchProducts} className="w-full">
+              Coba Lagi
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-primary">Manajemen Produk</h2>
-          <p className="text-gray-600">Kelola semua produk tempe Anda</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground">Manajemen Produk</h1>
+          <p className="text-muted-foreground text-sm md:text-base">Kelola semua produk tempe Anda dengan mudah</p>
         </div>
-        <Button onClick={handleCreateProduct}>
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+        <Button onClick={handleCreateProduct} className="w-full sm:w-auto">
+          <Plus className="w-4 h-4 mr-2" />
           Tambah Produk
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                <Icon name="package" className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-primary">{pagination.total}</p>
-                <p className="text-sm text-gray-600">Total Produk</p>
+      {/* Stats Grid - Responsive */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                <Package className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
+            <p className="text-xs md:text-sm text-muted-foreground mb-1">Total Produk</p>
+            <p className="text-xl md:text-2xl font-bold text-foreground">{pagination.total}</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-primary">{stats.active}</p>
-                <p className="text-sm text-gray-600">Produk Aktif</p>
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
               </div>
             </div>
+            <p className="text-xs md:text-sm text-muted-foreground mb-1">Produk Aktif</p>
+            <p className="text-xl md:text-2xl font-bold text-green-600">{stats.active}</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center mr-4">
-                <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-primary">{stats.totalStock}</p>
-                <p className="text-sm text-gray-600">Total Stok</p>
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+                <XCircle className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </div>
             </div>
+            <p className="text-xs md:text-sm text-muted-foreground mb-1">Tidak Aktif</p>
+            <p className="text-xl md:text-2xl font-bold text-muted-foreground">{stats.inactive}</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
-                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-primary">Rp {stats.avgPrice.toLocaleString()}</p>
-                <p className="text-sm text-gray-600">Rata-rata Harga</p>
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-lg flex items-center justify-center">
+                <Box className="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
             </div>
+            <p className="text-xs md:text-sm text-muted-foreground mb-1">Total Stok</p>
+            <p className="text-xl md:text-2xl font-bold text-foreground">{stats.totalStock}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              </div>
+            </div>
+            <p className="text-xs md:text-sm text-muted-foreground mb-1">Rata-rata Harga</p>
+            <p className="text-base md:text-lg font-bold text-primary">Rp {stats.avgPrice.toLocaleString()}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+            </div>
+            <p className="text-xs md:text-sm text-muted-foreground mb-1">Stok Menipis</p>
+            <p className="text-xl md:text-2xl font-bold text-red-600">{stats.lowStock}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        {/* Stock Trend Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-primary" />
+              Tren Stok 6 Bulan Terakhir
+            </CardTitle>
+            <CardDescription>Perkembangan total stok produk</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={stockTrendData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                <XAxis dataKey="name" stroke="#888" />
+                <YAxis stroke="#888" />
+                <Tooltip formatter={(value) => `${value} unit`} contentStyle={{ backgroundColor: "#fff", border: "1px solid #ccc" }} />
+                <Bar dataKey="stock" fill="#8B4513" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Category Distribution Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Layers className="w-5 h-5 text-primary" />
+              Distribusi Kategori Produk
+            </CardTitle>
+            <CardDescription>Breakdown produk per kategori</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie data={categoryDistribution} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`} outerRadius={100} fill="#8884d8" dataKey="value">
+                  {categoryDistribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters & Search - Responsive */}
       <Card>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Input placeholder="Cari produk (nama, SKU, deskripsi)..." value={search} onChange={handleSearchChange} className="md:col-span-2" />
-            <Select
-              value={status}
-              onValueChange={(value) => {
-                setStatus(value);
-                setPage(1);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Filter Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Status</SelectItem>
-                <SelectItem value="ACTIVE">Aktif</SelectItem>
-                <SelectItem value="INACTIVE">Tidak Aktif</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={limit.toString()}
-              onValueChange={(value) => {
-                setLimit(parseInt(value));
-                setPage(1);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="5">5 per halaman</SelectItem>
-                <SelectItem value="10">10 per halaman</SelectItem>
-                <SelectItem value="25">25 per halaman</SelectItem>
-                <SelectItem value="50">50 per halaman</SelectItem>
-              </SelectContent>
-            </Select>
+        <CardContent className="p-4 md:p-6">
+          <div className="flex flex-col gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Cari produk (nama, SKU, deskripsi)..." value={search} onChange={handleSearchChange} className="pl-10" />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Select
+                value={status}
+                onValueChange={(value) => {
+                  setStatus(value);
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger className="w-full sm:w-48">
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Filter Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Status</SelectItem>
+                  <SelectItem value="ACTIVE">Aktif</SelectItem>
+                  <SelectItem value="INACTIVE">Tidak Aktif</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={limit.toString()}
+                onValueChange={(value) => {
+                  setLimit(parseInt(value));
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger className="w-full sm:w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5 per halaman</SelectItem>
+                  <SelectItem value="10">10 per halaman</SelectItem>
+                  <SelectItem value="25">25 per halaman</SelectItem>
+                  <SelectItem value="50">50 per halaman</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  window.open(`/api/admin/products/export`, "_blank");
+                }}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Products Table */}
+      {/* Products Table/Cards - Responsive */}
       <Card>
         <CardHeader>
           <CardTitle>Daftar Produk</CardTitle>
@@ -297,39 +393,70 @@ export default function AdminProducts() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-3 px-4">SKU</th>
-                  <th className="text-left py-3 px-4">Nama Produk</th>
-                  <th className="text-left py-3 px-4">Kategori</th>
-                  <th className="text-left py-3 px-4">Harga</th>
-                  <th className="text-left py-3 px-4">Stok</th>
-                  <th className="text-left py-3 px-4">Status</th>
-                  <th className="text-left py-3 px-4">Aksi</th>
+                  <th className="text-left py-3 px-4 font-semibold text-sm">SKU</th>
+                  <th className="text-left py-3 px-4 font-semibold text-sm">Nama Produk</th>
+                  <th className="text-left py-3 px-4 font-semibold text-sm">Kategori</th>
+                  <th className="text-left py-3 px-4 font-semibold text-sm">Harga</th>
+                  <th className="text-left py-3 px-4 font-semibold text-sm">Stok</th>
+                  <th className="text-left py-3 px-4 font-semibold text-sm">Status</th>
+                  <th className="text-left py-3 px-4 font-semibold text-sm">Aksi</th>
                 </tr>
               </thead>
               <tbody>
                 {products.map((product) => (
-                  <tr key={product.id} className="border-b hover:bg-gray-50">
-                    <td className="py-3 px-4 font-mono text-sm">{product.sku}</td>
-                    <td className="py-3 px-4 font-medium">{product.name}</td>
-                    <td className="py-3 px-4">{product.category}</td>
-                    <td className="py-3 px-4">Rp {product.price.toLocaleString()}</td>
-                    <td className="py-3 px-4">
-                      <span className={`px-2 py-1 rounded-full text-xs ${product.stock > 100 ? "bg-green-100 text-green-800" : product.stock > 50 ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-800"}`}>{product.stock} pcs</span>
+                  <tr key={product.id} className="border-b hover:bg-accent/50 transition-colors">
+                    <td className="py-4 px-4">
+                      <code className="px-2 py-1 bg-accent rounded text-sm">{product.sku}</code>
                     </td>
-                    <td className="py-3 px-4">
-                      <Badge variant={product.status === "ACTIVE" ? "default" : "secondary"}>{product.status}</Badge>
+                    <td className="py-4 px-4">
+                      <p className="font-medium">{product.name}</p>
+                      {product.description && <p className="text-xs text-muted-foreground line-clamp-1">{product.description}</p>}
                     </td>
-                    <td className="py-3 px-4">
-                      <div className="flex space-x-2">
+                    <td className="py-4 px-4">
+                      <Badge variant="outline">{product.category}</Badge>
+                    </td>
+                    <td className="py-4 px-4 font-medium text-primary">Rp {product.price.toLocaleString()}</td>
+                    <td className="py-4 px-4">
+                      <Badge
+                        className={
+                          product.stock > 100
+                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                            : product.stock > 50
+                            ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                            : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                        }
+                      >
+                        {product.stock} pcs
+                      </Badge>
+                    </td>
+                    <td className="py-4 px-4">
+                      <Badge className={product.status === "ACTIVE" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400"}>
+                        {product.status === "ACTIVE" ? "Aktif" : "Tidak Aktif"}
+                      </Badge>
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex gap-2">
                         <Button size="sm" variant="outline" onClick={() => handleEditProduct(product)}>
+                          <Edit className="w-4 h-4 mr-1" />
                           Edit
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => handleToggleStatus(product.id, product.status)}>
-                          {product.status === "ACTIVE" ? "Nonaktifkan" : "Aktifkan"}
+                          {product.status === "ACTIVE" ? (
+                            <>
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Nonaktifkan
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Aktifkan
+                            </>
+                          )}
                         </Button>
                       </div>
                     </td>
@@ -339,17 +466,74 @@ export default function AdminProducts() {
             </table>
           </div>
 
+          {/* Mobile Card View */}
+          <div className="lg:hidden space-y-4">
+            {products.map((product) => (
+              <Card key={product.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <code className="px-2 py-1 bg-accent rounded text-xs">{product.sku}</code>
+                      <p className="mt-2 font-medium">{product.name}</p>
+                      {product.description && <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{product.description}</p>}
+                    </div>
+                    <Badge className={product.status === "ACTIVE" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400"}>
+                      {product.status === "ACTIVE" ? "Aktif" : "Tidak Aktif"}
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-2 mb-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Kategori:</span>
+                      <Badge variant="outline" className="text-xs">
+                        {product.category}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Harga:</span>
+                      <span className="font-medium text-primary">Rp {product.price.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Stok:</span>
+                      <Badge className={product.stock > 100 ? "bg-green-100 text-green-800 text-xs" : product.stock > 50 ? "bg-yellow-100 text-yellow-800 text-xs" : "bg-red-100 text-red-800 text-xs"}>{product.stock} pcs</Badge>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => handleEditProduct(product)} className="flex-1">
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleToggleStatus(product.id, product.status)} className="flex-1">
+                      {product.status === "ACTIVE" ? (
+                        <>
+                          <XCircle className="w-4 h-4 mr-2" />
+                          Nonaktifkan
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Aktifkan
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
           {/* Pagination */}
-          <div className="flex items-center justify-between mt-6">
-            <p className="text-sm text-gray-600">
-              Halaman {pagination.page} dari {pagination.totalPages}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-6 border-t">
+            <p className="text-sm text-muted-foreground">
+              Halaman {pagination.page} dari {pagination.totalPages} ({pagination.total} total)
             </p>
-            <div className="flex space-x-2">
+            <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
-                Sebelumnya
+                ← Sebelumnya
               </Button>
               <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))} disabled={page === pagination.totalPages}>
-                Selanjutnya
+                Selanjutnya →
               </Button>
             </div>
           </div>

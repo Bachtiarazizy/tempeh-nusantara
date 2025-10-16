@@ -1,456 +1,495 @@
 const { PrismaClient } = require("../src/generated/prisma");
+const bcrypt = require("bcryptjs");
 
 const prisma = new PrismaClient();
 
-const marketingMaterials = [
-  // ============================================
-  // BANNER MATERIALS
-  // ============================================
-  {
-    type: "BANNER",
-    status: "ACTIVE",
-    title: "Banner Instagram Square - Flash Sale",
-    slug: "banner-instagram-flash-sale",
-    description: "Banner promosi flash sale untuk Instagram feed, ukuran 1080x1080px",
-    category: "Social Media",
-    fileUrl: "https://cdn.example.com/materials/banners/ig-flash-sale.jpg",
-    thumbnailUrl: "https://cdn.example.com/materials/banners/thumbs/ig-flash-sale.jpg",
-    fileSize: 245000,
-    fileFormat: "JPG",
-    width: 1080,
-    height: 1080,
-    tags: ["instagram", "flash-sale", "promo", "square"],
-    sortOrder: 1,
-    publishedAt: new Date(),
-  },
-  {
-    type: "BANNER",
-    status: "ACTIVE",
-    title: "Banner Instagram Story - Diskon 50%",
-    slug: "banner-story-diskon-50",
-    description: "Banner story Instagram untuk promo diskon besar",
-    category: "Social Media",
-    fileUrl: "https://cdn.example.com/materials/banners/story-diskon.jpg",
-    thumbnailUrl: "https://cdn.example.com/materials/banners/thumbs/story-diskon.jpg",
-    fileSize: 180000,
-    fileFormat: "JPG",
-    width: 1080,
-    height: 1920,
-    tags: ["instagram", "story", "diskon", "promo"],
-    sortOrder: 2,
-    publishedAt: new Date(),
-  },
-  {
-    type: "BANNER",
-    status: "ACTIVE",
-    title: "Banner Facebook Cover - Brand Awareness",
-    slug: "banner-fb-cover-brand",
-    description: "Cover photo Facebook untuk meningkatkan brand awareness",
-    category: "Social Media",
-    fileUrl: "https://cdn.example.com/materials/banners/fb-cover.jpg",
-    thumbnailUrl: "https://cdn.example.com/materials/banners/thumbs/fb-cover.jpg",
-    fileSize: 320000,
-    fileFormat: "JPG",
-    width: 1640,
-    height: 856,
-    tags: ["facebook", "cover", "brand"],
-    sortOrder: 3,
-    publishedAt: new Date(),
-  },
-  {
-    type: "BANNER",
-    status: "ACTIVE",
-    title: "Banner WhatsApp Status - Gratis Ongkir",
-    slug: "banner-wa-gratis-ongkir",
-    description: "Banner untuk WhatsApp Status promosi gratis ongkir",
-    category: "WhatsApp",
-    fileUrl: "https://cdn.example.com/materials/banners/wa-gratis-ongkir.jpg",
-    thumbnailUrl: "https://cdn.example.com/materials/banners/thumbs/wa-gratis-ongkir.jpg",
-    fileSize: 195000,
-    fileFormat: "JPG",
-    width: 1080,
-    height: 1920,
-    tags: ["whatsapp", "status", "gratis-ongkir"],
-    sortOrder: 4,
-    publishedAt: new Date(),
-  },
+async function seedBuyerData() {
+  console.log("🌱 Seeding buyer data...");
 
-  // ============================================
-  // PRODUCT PHOTO MATERIALS
-  // ============================================
-  {
-    type: "PRODUCT_PHOTO",
-    status: "ACTIVE",
-    title: "Foto Produk - Paket Skincare Lengkap",
-    slug: "foto-produk-skincare-lengkap",
-    description: "Foto produk berkualitas tinggi paket skincare dengan background putih",
-    category: "Product Photography",
-    fileUrl: "https://cdn.example.com/materials/photos/skincare-pack.jpg",
-    thumbnailUrl: "https://cdn.example.com/materials/photos/thumbs/skincare-pack.jpg",
-    fileSize: 450000,
-    fileFormat: "JPG",
-    width: 2000,
-    height: 2000,
-    tags: ["skincare", "product", "high-res"],
-    sortOrder: 5,
-    publishedAt: new Date(),
-  },
-  {
-    type: "PRODUCT_PHOTO",
-    status: "ACTIVE",
-    title: "Foto Produk - Serum Wajah Premium",
-    slug: "foto-produk-serum-premium",
-    description: "Foto detail serum wajah dengan pencahayaan profesional",
-    category: "Product Photography",
-    fileUrl: "https://cdn.example.com/materials/photos/serum-premium.jpg",
-    thumbnailUrl: "https://cdn.example.com/materials/photos/thumbs/serum-premium.jpg",
-    fileSize: 380000,
-    fileFormat: "JPG",
-    width: 2000,
-    height: 2000,
-    tags: ["serum", "facial", "premium"],
-    sortOrder: 6,
-    publishedAt: new Date(),
-  },
-  {
-    type: "PRODUCT_PHOTO",
-    status: "ACTIVE",
-    title: "Foto Lifestyle - Penggunaan Produk",
-    slug: "foto-lifestyle-penggunaan",
-    description: "Foto lifestyle menunjukkan cara penggunaan produk",
-    category: "Product Photography",
-    fileUrl: "https://cdn.example.com/materials/photos/lifestyle-usage.jpg",
-    thumbnailUrl: "https://cdn.example.com/materials/photos/thumbs/lifestyle-usage.jpg",
-    fileSize: 520000,
-    fileFormat: "JPG",
-    width: 3000,
-    height: 2000,
-    tags: ["lifestyle", "usage", "tutorial"],
-    sortOrder: 7,
-    publishedAt: new Date(),
-  },
+  // Hash password
+  const hashedPassword = await bcrypt.hash("buyer123", 10);
 
-  // ============================================
-  // COPYWRITING MATERIALS
-  // ============================================
-  {
-    type: "COPYWRITING",
-    status: "ACTIVE",
-    title: "Copywriting Instagram - Post Produk Baru",
-    slug: "copy-ig-produk-baru",
-    description: "Template caption Instagram untuk launching produk baru",
-    category: "Social Media",
-    content: `🌟 PRODUK BARU HADIR! 🌟
+  // 1. Create Buyer User
+  const buyer = await prisma.user.upsert({
+    where: { email: "buyer@example.com" },
+    update: {
+      password: hashedPassword,
+      name: "Ahmad Fauzi",
+      phone: "08123456789",
+      role: "BUYER",
+      status: "ACTIVE",
+      emailVerified: true,
+    },
+    create: {
+      email: "buyer@example.com",
+      password: hashedPassword,
+      name: "Ahmad Fauzi",
+      phone: "08123456789",
+      role: "BUYER",
+      status: "ACTIVE",
+      emailVerified: true,
+    },
+  });
 
-Hai Beauties! 😍
+  console.log(`✅ Created buyer: ${buyer.email}`);
 
-Kami dengan bangga mempersembahkan produk terbaru kami yang akan mengubah rutinitas skincare kamu! ✨
+  // 2. Create Addresses for Buyer
+  // Delete existing addresses first to avoid duplicates
+  await prisma.address.deleteMany({
+    where: { userId: buyer.id },
+  });
 
-💫 [Nama Produk]
-✅ Manfaat 1
-✅ Manfaat 2
-✅ Manfaat 3
+  const addresses = [
+    {
+      userId: buyer.id,
+      label: "Rumah",
+      name: "Ahmad Fauzi",
+      phone: "08123456789",
+      address: "Jl. Merdeka No. 123, RT 01/RW 05",
+      city: "Jakarta Selatan",
+      province: "DKI Jakarta",
+      postalCode: "12345",
+      isDefault: true,
+    },
+    {
+      userId: buyer.id,
+      label: "Kantor",
+      name: "Ahmad Fauzi",
+      phone: "08123456789",
+      address: "Jl. Sudirman No. 456, Gedung ABC Lt. 5",
+      city: "Jakarta Pusat",
+      province: "DKI Jakarta",
+      postalCode: "10220",
+      isDefault: false,
+    },
+  ];
 
-🎁 PROMO SPESIAL:
-Diskon 30% untuk 100 pembeli pertama!
-Gunakan kode: [KODE_REFERAL_KAMU]
-
-🛒 Order sekarang di link bio atau klik: [LINK_AFILIASI_KAMU]
-
-#skincare #beauty #glowingskin #newproduct #promo`,
-    tags: ["instagram", "caption", "product-launch"],
-    sortOrder: 8,
-    publishedAt: new Date(),
-  },
-  {
-    type: "COPYWRITING",
-    status: "ACTIVE",
-    title: "Copywriting WhatsApp - Broadcast Promo",
-    slug: "copy-wa-broadcast-promo",
-    description: "Template pesan WhatsApp untuk broadcast promosi",
-    category: "WhatsApp",
-    content: `Halo Kak! 👋
-
-Ada kabar gembira nih! 🎉
-
-*FLASH SALE 50% OFF*
-Cuma 3 hari aja! ⚡
-
-Produk favorit kamu sekarang bisa dibeli dengan harga setengahnya! 
-
-🛍️ Produk yang ikut promo:
-• [Produk 1] - ~~Rp 200.000~~ jadi Rp 100.000
-• [Produk 2] - ~~Rp 150.000~~ jadi Rp 75.000
-• [Produk 3] - ~~Rp 180.000~~ jadi Rp 90.000
-
-💳 Bonus: GRATIS ONGKIR se-Indonesia!
-
-Yuk buruan order sebelum kehabisan!
-Klik link ini ya: [LINK_AFILIASI_KAMU]
-
-Ada yang mau ditanyakan? Langsung chat aja! 💬`,
-    tags: ["whatsapp", "broadcast", "flash-sale"],
-    sortOrder: 9,
-    publishedAt: new Date(),
-  },
-  {
-    type: "COPYWRITING",
-    status: "ACTIVE",
-    title: "Copywriting Email - Newsletter Bulanan",
-    slug: "copy-email-newsletter",
-    description: "Template email newsletter bulanan untuk subscriber",
-    category: "Email",
-    content: `Subject: Newsletter Bulan Ini - Promo & Tips Skincare! 💝
-
-Hai [Nama],
-
-Bulan ini kami punya banyak hal menarik untuk kamu! 
-
-📰 WHAT'S NEW:
-1. Peluncuran produk baru [Nama Produk]
-2. Tips skincare untuk musim ini
-3. Testimoni pelanggan yang inspiring
-
-🎁 PROMO EKSKLUSIF UNTUK KAMU:
-Dapatkan diskon 25% untuk semua produk dengan kode: [KODE_REFERAL]
-Berlaku hingga [Tanggal]
-
-📚 TIPS SKINCARE BULAN INI:
-[Tips 1]
-[Tips 2]
-[Tips 3]
-
-Jangan lewatkan kesempatan ini ya!
-
-Salam hangat,
-[Nama Brand]
-
-PS: Share newsletter ini ke teman kamu dan dapatkan bonus spesial! 🎉`,
-    tags: ["email", "newsletter", "monthly"],
-    sortOrder: 10,
-    publishedAt: new Date(),
-  },
-  {
-    type: "COPYWRITING",
-    status: "ACTIVE",
-    title: "Copywriting Testimoni - Template Review",
-    slug: "copy-testimoni-review",
-    description: "Template untuk membuat testimoni produk yang menarik",
-    category: "Social Media",
-    content: `⭐⭐⭐⭐⭐ REVIEW JUJUR!
-
-Awalnya ragu mau coba [Nama Produk], tapi setelah pakai [durasi], hasilnya AMAZING! 😍
-
-✨ Before: [kondisi sebelum]
-✨ After: [kondisi sesudah]
-
-Yang aku suka:
-✅ [Poin 1]
-✅ [Poin 2]
-✅ [Poin 3]
-
-Cocok banget buat yang punya masalah [masalah kulit]. Worth it deh! 💯
-
-Kalau mau coba, bisa order di link ini ya:
-[LINK_AFILIASI_KAMU]
-
-Pakai kode: [KODE_REFERAL] biar dapet diskon! 🎁
-
-#review #testimoni #skincarereview #beautytips`,
-    tags: ["review", "testimoni", "social-media"],
-    sortOrder: 11,
-    publishedAt: new Date(),
-  },
-
-  // ============================================
-  // VIDEO MATERIALS
-  // ============================================
-  {
-    type: "VIDEO",
-    status: "ACTIVE",
-    title: "Video Tutorial - Cara Pakai Produk",
-    slug: "video-tutorial-cara-pakai",
-    description: "Video tutorial singkat cara menggunakan produk dengan benar",
-    category: "Tutorial",
-    fileUrl: "https://cdn.example.com/materials/videos/tutorial-usage.mp4",
-    thumbnailUrl: "https://cdn.example.com/materials/videos/thumbs/tutorial-usage.jpg",
-    fileSize: 15500000,
-    fileFormat: "MP4",
-    width: 1080,
-    height: 1920,
-    duration: 45,
-    tags: ["tutorial", "video", "how-to"],
-    sortOrder: 12,
-    publishedAt: new Date(),
-  },
-  {
-    type: "VIDEO",
-    status: "ACTIVE",
-    title: "Video Unboxing - Paket Produk",
-    slug: "video-unboxing-paket",
-    description: "Video unboxing paket produk untuk konten sosial media",
-    category: "Unboxing",
-    fileUrl: "https://cdn.example.com/materials/videos/unboxing.mp4",
-    thumbnailUrl: "https://cdn.example.com/materials/videos/thumbs/unboxing.jpg",
-    fileSize: 22000000,
-    fileFormat: "MP4",
-    width: 1080,
-    height: 1920,
-    duration: 60,
-    tags: ["unboxing", "video", "reels"],
-    sortOrder: 13,
-    publishedAt: new Date(),
-  },
-  {
-    type: "VIDEO",
-    status: "ACTIVE",
-    title: "Video Testimoni - Customer Review",
-    slug: "video-testimoni-customer",
-    description: "Video testimoni pelanggan yang puas dengan produk",
-    category: "Testimoni",
-    fileUrl: "https://cdn.example.com/materials/videos/testimoni.mp4",
-    thumbnailUrl: "https://cdn.example.com/materials/videos/thumbs/testimoni.jpg",
-    fileSize: 18000000,
-    fileFormat: "MP4",
-    width: 1080,
-    height: 1920,
-    duration: 30,
-    tags: ["testimoni", "review", "customer"],
-    sortOrder: 14,
-    publishedAt: new Date(),
-  },
-
-  // ============================================
-  // GUIDELINE MATERIALS
-  // ============================================
-  {
-    type: "GUIDELINE",
-    status: "ACTIVE",
-    title: "Panduan Affiliate Marketing - Pemula",
-    slug: "panduan-affiliate-pemula",
-    description: "Panduan lengkap untuk affiliate pemula mulai dari awal",
-    category: "Guide",
-    fileUrl: "https://cdn.example.com/materials/guides/panduan-pemula.pdf",
-    thumbnailUrl: "https://cdn.example.com/materials/guides/thumbs/panduan-pemula.jpg",
-    fileSize: 2500000,
-    fileFormat: "PDF",
-    content: `# Panduan Affiliate Marketing untuk Pemula
-
-## 1. Pendahuluan
-Selamat datang di program affiliate kami!
-
-## 2. Cara Memulai
-- Daftar dan dapatkan kode referral
-- Pelajari produk dengan baik
-- Siapkan platform promosi
-
-## 3. Tips Sukses
-- Konsisten posting konten
-- Bangun trust dengan audience
-- Gunakan semua material yang tersedia
-
-## 4. Do's and Don'ts
-✅ Do: Jujur dalam review
-❌ Don't: Spam link di mana-mana
-
-...dan masih banyak lagi!`,
-    tags: ["panduan", "guide", "pemula"],
-    sortOrder: 15,
-    publishedAt: new Date(),
-  },
-  {
-    type: "GUIDELINE",
-    status: "ACTIVE",
-    title: "Brand Guidelines - Aturan Penggunaan Brand",
-    slug: "brand-guidelines",
-    description: "Panduan penggunaan logo, warna, dan identitas brand",
-    category: "Branding",
-    fileUrl: "https://cdn.example.com/materials/guides/brand-guide.pdf",
-    thumbnailUrl: "https://cdn.example.com/materials/guides/thumbs/brand-guide.jpg",
-    fileSize: 3200000,
-    fileFormat: "PDF",
-    content: `# Brand Guidelines
-
-## Logo Usage
-- Gunakan logo resmi yang disediakan
-- Jangan ubah proporsi atau warna
-- Minimum size: 100px
-
-## Color Palette
-Primary: #FF6B9D
-Secondary: #FFA07A
-Accent: #FFD700
-
-## Typography
-Primary Font: Poppins
-Secondary Font: Open Sans
-
-## Tone of Voice
-- Friendly & Approachable
-- Professional but not stiff
-- Inspiring & Motivating`,
-    tags: ["brand", "guidelines", "identity"],
-    sortOrder: 16,
-    publishedAt: new Date(),
-  },
-  {
-    type: "GUIDELINE",
-    status: "ACTIVE",
-    title: "Strategi Content Marketing - Advanced",
-    slug: "strategi-content-advanced",
-    description: "Strategi content marketing untuk affiliate yang sudah berpengalaman",
-    category: "Strategy",
-    fileUrl: "https://cdn.example.com/materials/guides/content-strategy.pdf",
-    thumbnailUrl: "https://cdn.example.com/materials/guides/thumbs/content-strategy.jpg",
-    fileSize: 2800000,
-    fileFormat: "PDF",
-    content: `# Strategi Content Marketing Advanced
-
-## 1. Content Planning
-- Buat content calendar
-- Mix konten: 60% edukasi, 30% engaging, 10% promosi
-- Analisis performa konten
-
-## 2. Platform Strategy
-Instagram: Visual storytelling
-WhatsApp: Personal approach
-Email: Nurturing leads
-
-## 3. Engagement Tactics
-- Respond cepat ke komentar
-- Buat polling & kuis
-- User generated content
-
-## 4. Conversion Optimization
-- Clear CTA
-- Urgency & Scarcity
-- Social proof`,
-    tags: ["strategi", "content", "advanced"],
-    sortOrder: 17,
-    publishedAt: new Date(),
-  },
-];
-
-async function seedMarketingMaterials() {
-  console.log("🌱 Seeding marketing materials...");
-
-  for (const material of marketingMaterials) {
-    await prisma.marketingMaterial.upsert({
-      where: { slug: material.slug },
-      update: material,
-      create: material,
+  for (const address of addresses) {
+    await prisma.address.create({
+      data: address,
     });
   }
 
-  console.log(`✅ Successfully seeded ${marketingMaterials.length} marketing materials`);
+  console.log(`✅ Created ${addresses.length} addresses`);
+
+  // 3. Get or Create Products
+  let products = await prisma.product.findMany({
+    where: { status: "ACTIVE" },
+    take: 10,
+  });
+
+  if (products.length < 5) {
+    console.log("⚠️ Not enough products. Creating sample products...");
+
+    // Create sample products
+    const sampleProducts = [
+      {
+        sku: "TMP-001",
+        name: "Tempe Mendoan Original",
+        slug: "tempe-mendoan-original",
+        description: "Tempe mendoan khas Purwokerto dengan bumbu rahasia yang gurih dan renyah. Cocok untuk camilan atau lauk.",
+        price: 15000,
+        comparePrice: 20000,
+        stock: 100,
+        weight: 250,
+        status: "ACTIVE",
+        category: "Tempe Goreng",
+        images: ["https://images.unsplash.com/photo-1609501676725-7186f017a4b7?w=500"],
+        featured: true,
+      },
+      {
+        sku: "TMP-002",
+        name: "Tempe Bacem Manis",
+        slug: "tempe-bacem-manis",
+        description: "Tempe bacem dengan bumbu manis khas Jawa Tengah. Dimasak dengan air kelapa dan rempah pilihan.",
+        price: 18000,
+        comparePrice: 25000,
+        stock: 80,
+        weight: 300,
+        status: "ACTIVE",
+        category: "Tempe Bumbu",
+        images: ["https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500"],
+        featured: true,
+      },
+      {
+        sku: "TMP-003",
+        name: "Tempe Kering Balado",
+        slug: "tempe-kering-balado",
+        description: "Tempe kering dengan balado pedas yang tahan lama. Perfect untuk stok makanan atau bekal.",
+        price: 25000,
+        comparePrice: 30000,
+        stock: 150,
+        weight: 200,
+        status: "ACTIVE",
+        category: "Tempe Kering",
+        images: ["https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=500"],
+        featured: false,
+      },
+      {
+        sku: "TMP-004",
+        name: "Tempe Segar Premium",
+        slug: "tempe-segar-premium",
+        description: "Tempe segar berkualitas premium dari kedelai pilihan. Ideal untuk diolah sesuai selera Anda.",
+        price: 12000,
+        comparePrice: 15000,
+        stock: 200,
+        weight: 500,
+        status: "ACTIVE",
+        category: "Tempe Segar",
+        images: ["https://images.unsplash.com/photo-1585032226651-759b368d7246?w=500"],
+        featured: false,
+      },
+      {
+        sku: "TMP-005",
+        name: "Tempe Orek Kacang",
+        slug: "tempe-orek-kacang",
+        description: "Tempe orek dengan kacang tanah, manis gurih dan renyah. Camilan favorit keluarga Indonesia.",
+        price: 22000,
+        comparePrice: 28000,
+        stock: 60,
+        weight: 250,
+        status: "ACTIVE",
+        category: "Tempe Kering",
+        images: ["https://images.unsplash.com/photo-1626074353765-517a681e40be?w=500"],
+        featured: true,
+      },
+    ];
+
+    for (const product of sampleProducts) {
+      await prisma.product.upsert({
+        where: { sku: product.sku },
+        update: product,
+        create: product,
+      });
+    }
+
+    // Refresh products list
+    products = await prisma.product.findMany({
+      where: { status: "ACTIVE" },
+      take: 10,
+    });
+  }
+
+  console.log(`✅ Found ${products.length} products`);
+
+  // 4. Create Orders with different statuses and dates
+  // Delete existing orders for this buyer first
+  await prisma.order.deleteMany({
+    where: { userId: buyer.id },
+  });
+
+  // Make sure we have at least 5 products
+  if (products.length < 5) {
+    console.log("⚠️ Not enough products. Skipping order creation.");
+    return;
+  }
+
+  const now = new Date();
+  const orders = [
+    // Delivered order from 3 months ago
+    {
+      orderNumber: `ORD-${Date.now()}-001`,
+      userId: buyer.id,
+      status: "DELIVERED",
+      paymentStatus: "PAID",
+      paymentMethod: "BANK_TRANSFER",
+      subtotal: 330000,
+      shippingCost: 20000,
+      discount: 0,
+      total: 350000,
+      shippingName: "Ahmad Fauzi",
+      shippingPhone: "08123456789",
+      shippingAddress: "Jl. Merdeka No. 123, RT 01/RW 05",
+      shippingCity: "Jakarta Selatan",
+      shippingProvince: "DKI Jakarta",
+      shippingPostalCode: "12345",
+      trackingNumber: "JNE123456789",
+      createdAt: new Date(now.getFullYear(), now.getMonth() - 3, 15),
+      paidAt: new Date(now.getFullYear(), now.getMonth() - 3, 15),
+      shippedAt: new Date(now.getFullYear(), now.getMonth() - 3, 16),
+      deliveredAt: new Date(now.getFullYear(), now.getMonth() - 3, 18),
+      items: [
+        { productIndex: 0, quantity: 1, price: 150000 },
+        { productIndex: 1, quantity: 1, price: 180000 },
+      ],
+    },
+    // Delivered order from last month
+    {
+      orderNumber: `ORD-${Date.now()}-002`,
+      userId: buyer.id,
+      status: "DELIVERED",
+      paymentStatus: "PAID",
+      paymentMethod: "EWALLET",
+      subtotal: 380000,
+      shippingCost: 15000,
+      discount: 20000,
+      total: 375000,
+      shippingName: "Ahmad Fauzi",
+      shippingPhone: "08123456789",
+      shippingAddress: "Jl. Merdeka No. 123, RT 01/RW 05",
+      shippingCity: "Jakarta Selatan",
+      shippingProvince: "DKI Jakarta",
+      shippingPostalCode: "12345",
+      trackingNumber: "JNE987654321",
+      createdAt: new Date(now.getFullYear(), now.getMonth() - 1, 20),
+      paidAt: new Date(now.getFullYear(), now.getMonth() - 1, 20),
+      shippedAt: new Date(now.getFullYear(), now.getMonth() - 1, 21),
+      deliveredAt: new Date(now.getFullYear(), now.getMonth() - 1, 23),
+      items: [
+        { productIndex: 1, quantity: 1, price: 180000 },
+        { productIndex: 2, quantity: 1, price: 120000 },
+        { productIndex: 3, quantity: 1, price: 80000 },
+      ],
+    },
+    // Shipped order from this month
+    {
+      orderNumber: `ORD-${Date.now()}-003`,
+      userId: buyer.id,
+      status: "SHIPPED",
+      paymentStatus: "PAID",
+      paymentMethod: "BANK_TRANSFER",
+      subtotal: 220000,
+      shippingCost: 18000,
+      discount: 0,
+      total: 238000,
+      shippingName: "Ahmad Fauzi",
+      shippingPhone: "08123456789",
+      shippingAddress: "Jl. Sudirman No. 456, Gedung ABC Lt. 5",
+      shippingCity: "Jakarta Pusat",
+      shippingProvince: "DKI Jakarta",
+      shippingPostalCode: "10220",
+      trackingNumber: "JNE456789123",
+      createdAt: new Date(now.getFullYear(), now.getMonth(), 5),
+      paidAt: new Date(now.getFullYear(), now.getMonth(), 5),
+      shippedAt: new Date(now.getFullYear(), now.getMonth(), 6),
+      items: [{ productIndex: 4, quantity: 1, price: 220000 }],
+    },
+    // Processing order from this month
+    {
+      orderNumber: `ORD-${Date.now()}-004`,
+      userId: buyer.id,
+      status: "PROCESSING",
+      paymentStatus: "PAID",
+      paymentMethod: "CREDIT_CARD",
+      subtotal: 300000,
+      shippingCost: 20000,
+      discount: 30000,
+      total: 290000,
+      shippingName: "Ahmad Fauzi",
+      shippingPhone: "08123456789",
+      shippingAddress: "Jl. Merdeka No. 123, RT 01/RW 05",
+      shippingCity: "Jakarta Selatan",
+      shippingProvince: "DKI Jakarta",
+      shippingPostalCode: "12345",
+      createdAt: new Date(now.getFullYear(), now.getMonth(), 10),
+      paidAt: new Date(now.getFullYear(), now.getMonth(), 10),
+      items: [{ productIndex: 0, quantity: 2, price: 150000 }],
+    },
+    // Pending order from this month
+    {
+      orderNumber: `ORD-${Date.now()}-005`,
+      userId: buyer.id,
+      status: "PENDING",
+      paymentStatus: "UNPAID",
+      paymentMethod: "BANK_TRANSFER",
+      subtotal: 400000,
+      shippingCost: 25000,
+      discount: 0,
+      total: 425000,
+      shippingName: "Ahmad Fauzi",
+      shippingPhone: "08123456789",
+      shippingAddress: "Jl. Merdeka No. 123, RT 01/RW 05",
+      shippingCity: "Jakarta Selatan",
+      shippingProvince: "DKI Jakarta",
+      shippingPostalCode: "12345",
+      createdAt: new Date(now.getFullYear(), now.getMonth(), 14),
+      items: [
+        { productIndex: 1, quantity: 1, price: 180000 },
+        { productIndex: 4, quantity: 1, price: 220000 },
+      ],
+    },
+  ];
+
+  for (const orderData of orders) {
+    const { items, ...orderInfo } = orderData;
+
+    // Map product indices to actual products
+    const orderItems = items.map((item) => {
+      const product = products[item.productIndex];
+      if (!product) {
+        throw new Error(`Product at index ${item.productIndex} not found`);
+      }
+      return {
+        productId: product.id,
+        productName: product.name,
+        productSku: product.sku,
+        price: item.price,
+        quantity: item.quantity,
+        subtotal: item.price * item.quantity,
+      };
+    });
+
+    const order = await prisma.order.create({
+      data: {
+        ...orderInfo,
+        items: {
+          create: orderItems,
+        },
+      },
+    });
+
+    console.log(`✅ Created order: ${order.orderNumber} - ${order.status}`);
+  }
+
+  // 5. Create Cart with items
+  // Delete existing cart first
+  const existingCart = await prisma.cart.findUnique({
+    where: { userId: buyer.id },
+  });
+
+  if (existingCart) {
+    await prisma.cartItem.deleteMany({
+      where: { cartId: existingCart.id },
+    });
+    await prisma.cart.delete({
+      where: { userId: buyer.id },
+    });
+  }
+
+  const cart = await prisma.cart.create({
+    data: {
+      userId: buyer.id,
+    },
+  });
+
+  const cartItems = [
+    {
+      cartId: cart.id,
+      productId: products[2] ? products[2].id : products[0].id,
+      productSku: products[2] ? products[2].sku : products[0].sku,
+      quantity: 2,
+      productName: products[2] ? products[2].name : products[0].name,
+      price: products[2] ? products[2].price : products[0].price,
+      image: products[2] ? products[2].images[0] : products[0].images[0],
+    },
+    {
+      cartId: cart.id,
+      productId: products[3] ? products[3].id : products[1].id,
+      productSku: products[3] ? products[3].sku : products[1].sku,
+      quantity: 1,
+      productName: products[3] ? products[3].name : products[1].name,
+      price: products[3] ? products[3].price : products[1].price,
+      image: products[3] ? products[3].images[0] : products[1].images[0],
+    },
+  ];
+
+  for (const item of cartItems) {
+    await prisma.cartItem.create({
+      data: item,
+    });
+  }
+
+  console.log(`✅ Created cart with ${cartItems.length} items`);
+
+  // 6. Create Wishlist with items
+  // Delete existing wishlist first
+  const existingWishlist = await prisma.wishlist.findUnique({
+    where: { userId: buyer.id },
+  });
+
+  if (existingWishlist) {
+    await prisma.wishlistItem.deleteMany({
+      where: { wishlistId: existingWishlist.id },
+    });
+    await prisma.wishlist.delete({
+      where: { userId: buyer.id },
+    });
+  }
+
+  const wishlist = await prisma.wishlist.create({
+    data: {
+      userId: buyer.id,
+    },
+  });
+
+  const wishlistItems = [
+    {
+      wishlistId: wishlist.id,
+      productId: products[4] ? products[4].id : products[0].id,
+      productSku: products[4] ? products[4].sku : products[0].sku,
+      productName: products[4] ? products[4].name : products[0].name,
+      price: products[4] ? products[4].price : products[0].price,
+      image: products[4] ? products[4].images[0] : products[0].images[0],
+    },
+  ];
+
+  for (const item of wishlistItems) {
+    await prisma.wishlistItem.create({
+      data: item,
+    });
+  }
+
+  console.log(`✅ Created wishlist with ${wishlistItems.length} items`);
+
+  // 7. Create Notifications
+  // Delete existing notifications first
+  await prisma.notification.deleteMany({
+    where: { userId: buyer.id },
+  });
+
+  const notifications = [
+    {
+      userId: buyer.id,
+      type: "ORDER_CREATED",
+      title: "Pesanan Berhasil Dibuat",
+      message: "Pesanan Anda dengan nomor ORD-001 berhasil dibuat. Silakan lakukan pembayaran.",
+      read: true,
+      delivered: true,
+      readAt: new Date(now.getFullYear(), now.getMonth(), 14),
+      createdAt: new Date(now.getFullYear(), now.getMonth(), 14),
+    },
+    {
+      userId: buyer.id,
+      type: "ORDER_SHIPPED",
+      title: "Pesanan Sedang Dikirim",
+      message: "Pesanan Anda sedang dalam perjalanan. Nomor resi: JNE456789123",
+      read: false,
+      delivered: true,
+      createdAt: new Date(now.getFullYear(), now.getMonth(), 6),
+    },
+    {
+      userId: buyer.id,
+      type: "ORDER_DELIVERED",
+      title: "Pesanan Telah Diterima",
+      message: "Pesanan Anda telah berhasil diterima. Terima kasih telah berbelanja!",
+      read: false,
+      delivered: true,
+      createdAt: new Date(now.getFullYear(), now.getMonth() - 1, 23),
+    },
+  ];
+
+  for (const notification of notifications) {
+    await prisma.notification.create({
+      data: notification,
+    });
+  }
+
+  console.log(`✅ Created ${notifications.length} notifications`);
+
+  console.log("\n📊 Summary:");
+  console.log(`- Email: buyer@example.com`);
+  console.log(`- Password: buyer123`);
+  console.log(`- Role: BUYER`);
+  console.log(`- Total Orders: ${orders.length}`);
+  console.log(`- Total Spending: Rp ${orders.reduce((sum, o) => sum + parseFloat(o.total), 0).toLocaleString("id-ID")}`);
 }
 
 async function main() {
   try {
-    await seedMarketingMaterials();
-    console.log("🎉 Seed completed successfully!");
+    await seedBuyerData();
+    console.log("\n🎉 Buyer seed completed successfully!");
   } catch (error) {
-    console.error("❌ Error seeding data:", error);
+    console.error("❌ Error seeding buyer data:", error);
     throw error;
   } finally {
     await prisma.$disconnect();
