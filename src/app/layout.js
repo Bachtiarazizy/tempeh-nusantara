@@ -14,7 +14,7 @@ const notoSans = Montserrat({
 });
 
 export const metadata = {
-  title: "Tempeh Nusantara",
+  title: "Tempeh Nusantara | Premium Tempeh Products from Indonesia",
   description: "Discover the authentic taste of Indonesia with our premium tempeh products, crafted for health-conscious consumers worldwide.",
 };
 
