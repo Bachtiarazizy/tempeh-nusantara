@@ -1,16 +1,17 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
+import { Upload, X, Image as ImageIcon, Star, Loader2 } from "lucide-react";
 
-export default function ProductFormModal({ isOpen, onClose, onSuccess, product = null }) {
-  const isEdit = !!product;
-
+export default function ProductFormModal({ isOpen, onClose, product, onSuccess }) {
   const [formData, setFormData] = useState({
     sku: "",
     name: "",
@@ -23,12 +24,18 @@ export default function ProductFormModal({ isOpen, onClose, onSuccess, product =
     status: "ACTIVE",
     category: "",
     featured: false,
+    mainImage: "",
+    images: [],
   });
 
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [uploadingMain, setUploadingMain] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
 
-  // Load product data when editing
+  // Temporary preview URLs for uploaded images
+  const [mainImagePreview, setMainImagePreview] = useState("");
+  const [galleryPreviews, setGalleryPreviews] = useState([]);
+
   useEffect(() => {
     if (product) {
       setFormData({
@@ -43,113 +50,206 @@ export default function ProductFormModal({ isOpen, onClose, onSuccess, product =
         status: product.status || "ACTIVE",
         category: product.category || "",
         featured: product.featured || false,
+        mainImage: product.images?.[0] || "",
+        images: product.images || [],
       });
+      setMainImagePreview(product.images?.[0] || "");
+      setGalleryPreviews(product.images?.slice(1) || []);
     } else {
-      // Reset form for new product
-      setFormData({
-        sku: "",
-        name: "",
-        slug: "",
-        description: "",
-        price: "",
-        comparePrice: "",
-        stock: "",
-        weight: "",
-        status: "ACTIVE",
-        category: "",
-        featured: false,
-      });
+      resetForm();
     }
-    setErrors({});
   }, [product, isOpen]);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-    // Clear error for this field
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
+  const resetForm = () => {
+    setFormData({
+      sku: "",
+      name: "",
+      slug: "",
+      description: "",
+      price: "",
+      comparePrice: "",
+      stock: "",
+      weight: "",
+      status: "ACTIVE",
+      category: "",
+      featured: false,
+      mainImage: "",
+      images: [],
+    });
+    setMainImagePreview("");
+    setGalleryPreviews([]);
   };
 
-  const handleSelectChange = (name, value) => {
+  // Generate slug from name
+  const generateSlug = (name) => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
+
+    // Auto-generate slug when name changes
+    if (name === "name" && !product) {
+      setFormData((prev) => ({
+        ...prev,
+        slug: generateSlug(value),
+      }));
     }
   };
 
-  // Auto-generate slug from name
-  const generateSlug = () => {
-    if (formData.name && !formData.slug) {
-      const slug = formData.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "");
-      setFormData((prev) => ({ ...prev, slug }));
+  // Upload main image
+  const handleMainImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file
+    if (!file.type.startsWith("image/")) {
+      toast.error("File harus berupa gambar");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Ukuran file maksimal 5MB");
+      return;
+    }
+
+    setUploadingMain(true);
+
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append("file", file);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formDataUpload,
+      });
+
+      if (!response.ok) throw new Error("Upload failed");
+
+      const result = await response.json();
+
+      setFormData((prev) => ({
+        ...prev,
+        mainImage: result.url,
+      }));
+      setMainImagePreview(result.url);
+      toast.success("Gambar utama berhasil diupload");
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Gagal upload gambar");
+    } finally {
+      setUploadingMain(false);
     }
   };
 
-  const validate = () => {
-    const newErrors = {};
+  // Upload gallery images
+  const handleGalleryUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    if (!formData.sku.trim()) newErrors.sku = "SKU wajib diisi";
-    if (!formData.name.trim()) newErrors.name = "Nama produk wajib diisi";
-    if (!formData.slug.trim()) newErrors.slug = "Slug wajib diisi";
-    if (!formData.price || parseFloat(formData.price) <= 0) {
-      newErrors.price = "Harga harus lebih dari 0";
+    // Validate total images
+    if (galleryPreviews.length + files.length > 5) {
+      toast.error("Maksimal 5 gambar galeri");
+      return;
     }
-    if (!formData.category.trim()) newErrors.category = "Kategori wajib diisi";
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    // Validate each file
+    for (const file of files) {
+      if (!file.type.startsWith("image/")) {
+        toast.error("Semua file harus berupa gambar");
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Ukuran setiap file maksimal 5MB");
+        return;
+      }
+    }
+
+    setUploadingGallery(true);
+
+    try {
+      const uploadPromises = files.map(async (file) => {
+        const formDataUpload = new FormData();
+        formDataUpload.append("file", file);
+
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: formDataUpload,
+        });
+
+        if (!response.ok) throw new Error("Upload failed");
+        const result = await response.json();
+        return result.url;
+      });
+
+      const uploadedUrls = await Promise.all(uploadPromises);
+
+      setGalleryPreviews((prev) => [...prev, ...uploadedUrls]);
+      toast.success(`${uploadedUrls.length} gambar berhasil diupload`);
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Gagal upload gambar");
+    } finally {
+      setUploadingGallery(false);
+    }
+  };
+
+  // Remove gallery image
+  const removeGalleryImage = (index) => {
+    setGalleryPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Remove main image
+  const removeMainImage = () => {
+    setFormData((prev) => ({ ...prev, mainImage: "" }));
+    setMainImagePreview("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validate()) return;
-
     setLoading(true);
 
     try {
-      const url = isEdit ? `/api/admin/products/${product.id}` : "/api/admin/products";
+      // Combine main image and gallery images
+      const allImages = [formData.mainImage, ...galleryPreviews].filter(Boolean);
 
-      const method = isEdit ? "PATCH" : "POST";
+      const payload = {
+        ...formData,
+        price: parseFloat(formData.price),
+        comparePrice: formData.comparePrice ? parseFloat(formData.comparePrice) : null,
+        stock: parseInt(formData.stock) || 0,
+        weight: formData.weight ? parseFloat(formData.weight) : null,
+        images: allImages,
+      };
+
+      const url = product ? `/api/admin/products/${product.id}` : "/api/admin/products";
+      const method = product ? "PATCH" : "POST";
 
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...formData,
-          price: parseFloat(formData.price),
-          comparePrice: formData.comparePrice ? parseFloat(formData.comparePrice) : null,
-          stock: formData.stock ? parseInt(formData.stock) : 0,
-          weight: formData.weight ? parseFloat(formData.weight) : null,
-        }),
+        body: JSON.stringify(payload),
       });
 
-      const result = await response.json();
-
       if (!response.ok) {
-        throw new Error(result.error || "Gagal menyimpan produk");
+        const error = await response.json();
+        throw new Error(error.error || "Failed to save product");
       }
 
-      if (result.success) {
-        onSuccess();
-        onClose();
-      }
+      toast.success(product ? "Produk berhasil diupdate!" : "Produk berhasil ditambahkan!");
+      onSuccess();
     } catch (error) {
       console.error("Error saving product:", error);
-      alert(error.message);
+      toast.error(error.message || "Gagal menyimpan produk");
     } finally {
       setLoading(false);
     }
@@ -157,73 +257,154 @@ export default function ProductFormModal({ isOpen, onClose, onSuccess, product =
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Produk" : "Tambah Produk Baru"}</DialogTitle>
-          <DialogDescription>{isEdit ? "Perbarui informasi produk" : "Isi form di bawah untuk menambah produk baru"}</DialogDescription>
+          <DialogTitle>{product ? "Edit Produk" : "Tambah Produk Baru"}</DialogTitle>
+          <DialogDescription>{product ? "Perbarui informasi produk" : "Lengkapi form untuk menambah produk baru"}</DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="sku">SKU *</Label>
-              <Input id="sku" name="sku" value={formData.sku} onChange={handleChange} placeholder="TEMP-001" disabled={isEdit} />
-              {errors.sku && <p className="text-sm text-red-600 mt-1">{errors.sku}</p>}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Image Upload Section */}
+          <div className="space-y-4 border-b pb-6">
+            <h3 className="font-semibold text-lg">Gambar Produk</h3>
+
+            {/* Main Image */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Star className="w-4 h-4 text-yellow-500" />
+                Gambar Utama <span className="text-red-500">*</span>
+              </Label>
+
+              {mainImagePreview ? (
+                <div className="relative w-full h-64 bg-gray-100 rounded-lg overflow-hidden group">
+                  <img src={mainImagePreview} alt="Main preview" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Button type="button" variant="destructive" size="sm" onClick={removeMainImage}>
+                      <X className="w-4 h-4 mr-2" />
+                      Hapus
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary transition-colors">
+                  <input type="file" id="main-image" accept="image/*" onChange={handleMainImageUpload} className="hidden" disabled={uploadingMain} />
+                  <label htmlFor="main-image" className="cursor-pointer">
+                    {uploadingMain ? <Loader2 className="w-12 h-12 mx-auto text-gray-400 animate-spin" /> : <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />}
+                    <p className="text-sm text-gray-600 mb-2">{uploadingMain ? "Mengupload..." : "Klik untuk upload gambar utama"}</p>
+                    <p className="text-xs text-gray-500">PNG, JPG, JPEG (Max. 5MB)</p>
+                  </label>
+                </div>
+              )}
             </div>
 
-            <div>
-              <Label htmlFor="category">Kategori *</Label>
-              <Input id="category" name="category" value={formData.category} onChange={handleChange} placeholder="Tempe Fresh" />
-              {errors.category && <p className="text-sm text-red-600 mt-1">{errors.category}</p>}
+            {/* Gallery Images */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <ImageIcon className="w-4 h-4" />
+                Gambar Galeri (Opsional)
+              </Label>
+              <p className="text-xs text-muted-foreground">Maksimal 5 gambar tambahan</p>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                {/* Existing gallery images */}
+                {galleryPreviews.map((url, index) => (
+                  <div key={index} className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden group">
+                    <img src={url} alt={`Gallery ${index + 1}`} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Button type="button" variant="destructive" size="sm" onClick={() => removeGalleryImage(index)}>
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Upload button */}
+                {galleryPreviews.length < 5 && (
+                  <div className="aspect-square border-2 border-dashed border-gray-300 rounded-lg hover:border-primary transition-colors">
+                    <input type="file" id="gallery-images" accept="image/*" multiple onChange={handleGalleryUpload} className="hidden" disabled={uploadingGallery} />
+                    <label htmlFor="gallery-images" className="w-full h-full flex flex-col items-center justify-center cursor-pointer p-4">
+                      {uploadingGallery ? (
+                        <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+                      ) : (
+                        <>
+                          <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                          <p className="text-xs text-gray-600 text-center">Upload</p>
+                        </>
+                      )}
+                    </label>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="name">Nama Produk *</Label>
-            <Input id="name" name="name" value={formData.name} onChange={handleChange} onBlur={generateSlug} placeholder="Tempe Segar Premium" />
-            {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name}</p>}
-          </div>
-
-          <div>
-            <Label htmlFor="slug">Slug *</Label>
-            <Input id="slug" name="slug" value={formData.slug} onChange={handleChange} placeholder="tempe-segar-premium" />
-            {errors.slug && <p className="text-sm text-red-600 mt-1">{errors.slug}</p>}
-          </div>
-
-          <div>
-            <Label htmlFor="description">Deskripsi</Label>
-            <Textarea id="description" name="description" value={formData.description} onChange={handleChange} placeholder="Deskripsi produk..." rows={3} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="price">Harga *</Label>
-              <Input id="price" name="price" type="number" step="0.01" value={formData.price} onChange={handleChange} placeholder="15000" />
-              {errors.price && <p className="text-sm text-red-600 mt-1">{errors.price}</p>}
+          {/* Product Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="sku">
+                SKU <span className="text-red-500">*</span>
+              </Label>
+              <Input id="sku" name="sku" value={formData.sku} onChange={handleInputChange} placeholder="TEMPE-001" required disabled={!!product} />
             </div>
 
-            <div>
+            <div className="space-y-2">
+              <Label htmlFor="name">
+                Nama Produk <span className="text-red-500">*</span>
+              </Label>
+              <Input id="name" name="name" value={formData.name} onChange={handleInputChange} placeholder="Tempe Kedelai Premium" required />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="slug">
+                Slug <span className="text-red-500">*</span>
+              </Label>
+              <Input id="slug" name="slug" value={formData.slug} onChange={handleInputChange} placeholder="tempe-kedelai-premium" required />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category">
+                Kategori <span className="text-red-500">*</span>
+              </Label>
+              <Select value={formData.category} onValueChange={(value) => setFormData((prev) => ({ ...prev, category: value }))} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TEMPE_KEDELAI">Tempe Kedelai</SelectItem>
+                  <SelectItem value="TEMPE_GEMBUS">Tempe Gembus</SelectItem>
+                  <SelectItem value="TEMPE_KACANG">Tempe Kacang</SelectItem>
+                  <SelectItem value="LAINNYA">Lainnya</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="price">
+                Harga <span className="text-red-500">*</span>
+              </Label>
+              <Input id="price" name="price" type="number" value={formData.price} onChange={handleInputChange} placeholder="15000" required min="0" step="100" />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="comparePrice">Harga Coret</Label>
-              <Input id="comparePrice" name="comparePrice" type="number" step="0.01" value={formData.comparePrice} onChange={handleChange} placeholder="20000" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="stock">Stok</Label>
-              <Input id="stock" name="stock" type="number" value={formData.stock} onChange={handleChange} placeholder="100" />
+              <Input id="comparePrice" name="comparePrice" type="number" value={formData.comparePrice} onChange={handleInputChange} placeholder="20000" min="0" step="100" />
             </div>
 
-            <div>
+            <div className="space-y-2">
+              <Label htmlFor="stock">
+                Stok <span className="text-red-500">*</span>
+              </Label>
+              <Input id="stock" name="stock" type="number" value={formData.stock} onChange={handleInputChange} placeholder="100" required min="0" />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="weight">Berat (gram)</Label>
-              <Input id="weight" name="weight" type="number" step="0.01" value={formData.weight} onChange={handleChange} placeholder="500" />
+              <Input id="weight" name="weight" type="number" value={formData.weight} onChange={handleInputChange} placeholder="500" min="0" step="10" />
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
-              <Select value={formData.status} onValueChange={(value) => handleSelectChange("status", value)}>
+              <Select value={formData.status} onValueChange={(value) => setFormData((prev) => ({ ...prev, status: value }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -234,22 +415,39 @@ export default function ProductFormModal({ isOpen, onClose, onSuccess, product =
               </Select>
             </div>
 
-            <div className="flex items-center space-x-2 pt-8">
-              <input type="checkbox" id="featured" name="featured" checked={formData.featured} onChange={handleChange} className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary" />
-              <Label htmlFor="featured" className="cursor-pointer">
-                Produk Unggulan
-              </Label>
+            <div className="space-y-2 flex items-center">
+              <div className="flex items-center space-x-2">
+                <Switch id="featured" checked={formData.featured} onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, featured: checked }))} />
+                <Label htmlFor="featured" className="cursor-pointer">
+                  Produk Unggulan
+                </Label>
+              </div>
             </div>
           </div>
 
-          <DialogFooter>
+          <div className="space-y-2">
+            <Label htmlFor="description">Deskripsi</Label>
+            <Textarea id="description" name="description" value={formData.description} onChange={handleInputChange} placeholder="Deskripsi lengkap produk..." rows={4} />
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 justify-end pt-4 border-t">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
               Batal
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Menyimpan..." : isEdit ? "Update Produk" : "Tambah Produk"}
+            <Button type="submit" disabled={loading || !formData.mainImage}>
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : product ? (
+                "Update Produk"
+              ) : (
+                "Tambah Produk"
+              )}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
